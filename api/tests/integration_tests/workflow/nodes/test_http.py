@@ -6,16 +6,16 @@ import pytest
 
 from configs import dify_config
 from core.app.entities.app_invoke_entities import InvokeFrom
-from core.app.workflow.node_factory import DifyNodeFactory
 from core.helper.ssrf_proxy import ssrf_proxy
 from core.tools.tool_file_manager import ToolFileManager
-from core.workflow.entities import GraphInitParams
-from core.workflow.enums import WorkflowNodeExecutionStatus
-from core.workflow.file.file_manager import file_manager
-from core.workflow.graph import Graph
-from core.workflow.nodes.http_request import HttpRequestNode, HttpRequestNodeConfig
-from core.workflow.runtime import GraphRuntimeState, VariablePool
-from core.workflow.system_variable import SystemVariable
+from core.workflow.node_factory import DifyNodeFactory
+from dify_graph.entities import GraphInitParams
+from dify_graph.enums import WorkflowNodeExecutionStatus
+from dify_graph.file.file_manager import file_manager
+from dify_graph.graph import Graph
+from dify_graph.nodes.http_request import HttpRequestNode, HttpRequestNodeConfig
+from dify_graph.runtime import GraphRuntimeState, VariablePool
+from dify_graph.system_variable import SystemVariable
 from models.enums import UserFrom
 from tests.integration_tests.workflow.nodes.__mock.http import setup_http_mock
 
@@ -190,17 +190,17 @@ def test_custom_authorization_header(setup_http_mock):
 @pytest.mark.parametrize("setup_http_mock", [["none"]], indirect=True)
 def test_custom_auth_with_empty_api_key_raises_error(setup_http_mock):
     """Test: In custom authentication mode, when the api_key is empty, AuthorizationConfigError should be raised."""
-    from core.workflow.enums import NodeType
-    from core.workflow.nodes.http_request.entities import (
+    from dify_graph.nodes.http_request.entities import (
         HttpRequestNodeAuthorization,
         HttpRequestNodeData,
         HttpRequestNodeTimeout,
     )
-    from core.workflow.nodes.http_request.exc import AuthorizationConfigError
-    from core.workflow.nodes.http_request.executor import Executor
-    from core.workflow.runtime import VariablePool
-    from core.workflow.system_variable import SystemVariable
+    from dify_graph.nodes.http_request.exc import AuthorizationConfigError
+    from dify_graph.nodes.http_request.executor import Executor
+    from dify_graph.runtime import VariablePool
+    from dify_graph.system_variable import SystemVariable
 
+    # Create variable pool
     variable_pool = VariablePool(
         system_variables=SystemVariable(user_id="test", files=[]),
         user_inputs={},
@@ -208,8 +208,8 @@ def test_custom_auth_with_empty_api_key_raises_error(setup_http_mock):
         conversation_variables=[],
     )
 
+    # Create node data with custom auth and empty api_key
     node_data = HttpRequestNodeData(
-        type=NodeType.HTTP_REQUEST,
         title="http",
         desc="",
         url="http://example.com",
@@ -228,6 +228,7 @@ def test_custom_auth_with_empty_api_key_raises_error(setup_http_mock):
         ssl_verify=True,
     )
 
+    # Create executor should raise AuthorizationConfigError
     with pytest.raises(AuthorizationConfigError, match="API key is required"):
         Executor(
             node_data=node_data,

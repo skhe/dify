@@ -4,23 +4,22 @@ import time
 from unittest.mock import MagicMock
 
 from core.app.entities.app_invoke_entities import InvokeFrom
-from core.workflow.entities.graph_init_params import GraphInitParams
-from core.workflow.entities.pause_reason import SchedulingPause
-from core.workflow.enums import NodeType
-from core.workflow.graph import Graph
-from core.workflow.graph_engine import GraphEngine, GraphEngineConfig
-from core.workflow.graph_engine.command_channels import InMemoryChannel
-from core.workflow.graph_engine.entities.commands import (
+from dify_graph.entities.graph_init_params import GraphInitParams
+from dify_graph.entities.pause_reason import SchedulingPause
+from dify_graph.graph import Graph
+from dify_graph.graph_engine import GraphEngine, GraphEngineConfig
+from dify_graph.graph_engine.command_channels import InMemoryChannel
+from dify_graph.graph_engine.entities.commands import (
     AbortCommand,
     CommandType,
     PauseCommand,
     UpdateVariablesCommand,
     VariableUpdate,
 )
-from core.workflow.graph_events import GraphRunAbortedEvent, GraphRunPausedEvent, GraphRunStartedEvent
-from core.workflow.nodes.start.start_node import StartNode
-from core.workflow.runtime import GraphRuntimeState, VariablePool
-from core.workflow.variables import IntegerVariable, StringVariable
+from dify_graph.graph_events import GraphRunAbortedEvent, GraphRunPausedEvent, GraphRunStartedEvent
+from dify_graph.nodes.start.start_node import StartNode
+from dify_graph.runtime import GraphRuntimeState, VariablePool
+from dify_graph.variables import IntegerVariable, StringVariable
 from models.enums import UserFrom
 
 
@@ -40,7 +39,7 @@ def test_abort_command():
     # Create mock nodes with required attributes - using shared runtime state
     start_node = StartNode(
         id="start",
-        config={"id": "start", "data": {"type": NodeType.START, "title": "start", "variables": []}},
+        config={"id": "start", "data": {"title": "start", "variables": []}},
         graph_init_params=GraphInitParams(
             tenant_id="test_tenant",
             app_id="test_app",
@@ -100,7 +99,7 @@ def test_redis_channel_serialization():
     mock_redis.pipeline.return_value.__enter__ = MagicMock(return_value=mock_pipeline)
     mock_redis.pipeline.return_value.__exit__ = MagicMock(return_value=None)
 
-    from core.workflow.graph_engine.command_channels.redis_channel import RedisChannel
+    from dify_graph.graph_engine.command_channels.redis_channel import RedisChannel
 
     # Create channel with a specific key
     channel = RedisChannel(mock_redis, channel_key="workflow:123:commands")
@@ -150,7 +149,7 @@ def test_pause_command():
 
     start_node = StartNode(
         id="start",
-        config={"id": "start", "data": {"type": NodeType.START, "title": "start", "variables": []}},
+        config={"id": "start", "data": {"title": "start", "variables": []}},
         graph_init_params=GraphInitParams(
             tenant_id="test_tenant",
             app_id="test_app",
@@ -206,7 +205,7 @@ def test_update_variables_command_updates_pool():
 
     start_node = StartNode(
         id="start",
-        config={"id": "start", "data": {"type": NodeType.START, "title": "start", "variables": []}},
+        config={"id": "start", "data": {"title": "start", "variables": []}},
         graph_init_params=GraphInitParams(
             tenant_id="test_tenant",
             app_id="test_app",

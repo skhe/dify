@@ -8,11 +8,9 @@ requiring external services (LLM, Agent, Tool, Knowledge Retrieval, HTTP Request
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-from core.app.workflow.node_factory import DifyNodeFactory
-from core.workflow.entities.base_node import BaseNodeData
-from core.workflow.entities.graph_config import NodeConfigDict
-from core.workflow.enums import NodeType
-from core.workflow.nodes.base.node import Node
+from core.workflow.node_factory import DifyNodeFactory
+from dify_graph.enums import NodeType
+from dify_graph.nodes.base.node import Node
 
 from .test_mock_nodes import (
     MockAgentNode,
@@ -30,8 +28,8 @@ from .test_mock_nodes import (
 )
 
 if TYPE_CHECKING:
-    from core.workflow.entities import GraphInitParams
-    from core.workflow.runtime import GraphRuntimeState
+    from dify_graph.entities import GraphInitParams
+    from dify_graph.runtime import GraphRuntimeState
 
     from .test_mock_config import MockConfig
 
@@ -77,36 +75,34 @@ class MockNodeFactory(DifyNodeFactory):
             NodeType.CODE: MockCodeNode,
         }
 
-    def create_node(self, node_config: Mapping[str, Any] | NodeConfigDict) -> Node:
+    def create_node(self, node_config: Mapping[str, Any]) -> Node:
         """
         Create a node instance, using mock implementations for third-party service nodes.
 
         :param node_config: Node configuration dictionary
         :return: Node instance (real or mocked)
         """
-        node_data = node_config.get("data")
+        # Get node type from config
+        node_data = node_config.get("data", {})
+        node_type_str = node_data.get("type")
 
-        # Support both dict-based and BaseNodeData-based configurations.
-        node_type: NodeType | None = None
-        if isinstance(node_data, BaseNodeData):
-            node_type = node_data.type
-        elif isinstance(node_data, Mapping):
-            node_type_str = node_data.get("type")
-            if node_type_str:
-                try:
-                    node_type = NodeType(node_type_str)
-                except ValueError:
-                    return super().create_node(node_config)
-
-        if node_type is None:
+        if not node_type_str:
+            # Fall back to parent implementation for nodes without type
             return super().create_node(node_config)
 
-        # Check if this node type should be mocked.
+        try:
+            node_type = NodeType(node_type_str)
+        except ValueError:
+            # Unknown node type, use parent implementation
+            return super().create_node(node_config)
+
+        # Check if this node type should be mocked
         if node_type in self._mock_node_types:
             node_id = node_config.get("id")
             if not node_id:
                 raise ValueError("Node config missing id")
 
+            # Create mock node instance
             mock_class = self._mock_node_types[node_type]
             if node_type == NodeType.CODE:
                 mock_instance = mock_class(
@@ -151,7 +147,7 @@ class MockNodeFactory(DifyNodeFactory):
 
             return mock_instance
 
-        # For non-mocked node types, use parent implementation.
+        # For non-mocked node types, use parent implementation
         return super().create_node(node_config)
 
     def should_mock_node(self, node_type: NodeType) -> bool:
