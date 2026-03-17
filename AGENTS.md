@@ -43,3 +43,27 @@ The codebase is split into:
 - Backend architecture adheres to DDD and Clean Architecture principles.
 - Async work runs through Celery with Redis as the broker.
 - Frontend user-facing strings must use `web/i18n/en-US/`; avoid hardcoded text.
+
+## Cursor Cloud specific instructions
+
+### Services overview
+
+| Service | Port | How to start |
+|---|---|---|
+| Backend API | 5001 | `cd api && uv run flask run --host 0.0.0.0 --port=5001 --debug` |
+| Celery Worker | — | `cd api && uv run celery -A app.celery worker -P threads -c 1 --loglevel INFO -Q dataset,priority_dataset,...` (see `dev/start-worker`) |
+| Frontend Web | 3000 | `cd web && pnpm dev` |
+| Docker middleware | 5432,6379,8080,5002,8194 | `cd docker && sudo docker compose -f docker-compose.middleware.yaml --env-file middleware.env -p dify-middlewares-dev up -d` |
+
+### Non-obvious setup notes
+
+- **Node.js >= 24 required** by `web/package.json` engines field. The VM ships with Node 22 by default; run `nvm install 24 && nvm use 24 && nvm alias default 24` first.
+- **uv** (Python package manager) must be installed: `curl -LsSf https://astral.sh/uv/install.sh | sh`.
+- **Docker** must be installed and running for middleware (PostgreSQL, Redis, Weaviate, Plugin Daemon, Sandbox, SSRF Proxy). In Cloud Agent VMs, use `fuse-overlayfs` storage driver and `iptables-legacy` for Docker-in-Docker compatibility.
+- After starting Docker middleware, run `cd api && uv run flask db upgrade` before starting the API.
+- **Environment files** must be copied before first run: `api/.env.example` → `api/.env`, `web/.env.example` → `web/.env.local`, `docker/middleware.env.example` → `docker/middleware.env`.
+- The initial admin account must be created via `POST /console/api/setup` with email, name, and password fields before the UI is usable.
+- Backend lint: `make lint` (runs ruff format + check + import-linter + dotenv-linter). Frontend lint: `cd web && pnpm lint`.
+- Backend tests: `make test` (or `uv run --project api --dev pytest api/tests/unit_tests`). Frontend tests: `cd web && pnpm test`.
+- Integration tests are CI-only (per `AGENTS.md`); do not attempt to run them locally.
+- One frontend test (`date-and-time-picker`) may fail due to VM timezone differences — this is a known pre-existing issue, not a setup problem.
