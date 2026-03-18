@@ -15,9 +15,9 @@ const i18nPrefix = 'nodes.humanInput'
 type Params = {
   id: string
   payload: HumanInputNodeType
-  runInputData: Record<string, unknown>
+  runInputData: Record<string, string>
   getInputVars: (textList: string[]) => InputVar[]
-  setRunInputData: (data: Record<string, unknown>) => void
+  setRunInputData: (data: Record<string, string>) => void
 }
 const useSingleRunFormParams = ({
   id,
@@ -30,7 +30,7 @@ const useSingleRunFormParams = ({
   const { inputs } = useNodeCrud<HumanInputNodeType>(id, payload)
   const [showGeneratedForm, setShowGeneratedForm] = useState(false)
   const [formData, setFormData] = useState<HumanInputFormData | null>(null)
-  const [requiredInputs, setRequiredInputs] = useState<Record<string, unknown>>({})
+  const [requiredInputs, setRequiredInputs] = useState<Record<string, string>>({})
   const generatedInputs = useMemo(() => {
     const defaultInputs = inputs.inputs.reduce((acc, input) => {
       if (input.default.type === 'variable') {
@@ -46,8 +46,8 @@ const useSingleRunFormParams = ({
     const forms: FormProps[] = [{
       label: t(`${i18nPrefix}.singleRun.label`, { ns: 'workflow' })!,
       inputs: generatedInputs,
-      values: runInputData,
-      onChange: setRunInputData,
+      values: runInputData as Record<string, unknown>,
+      onChange: newValues => setRunInputData(newValues as Record<string, string>),
     }]
     return forms
   }, [t, generatedInputs, runInputData, setRunInputData])
@@ -76,10 +76,10 @@ const useSingleRunFormParams = ({
     }
   }, [appId, id, isWorkflowMode])
 
-  const handleFetchFormContent = useCallback(async (inputs: Record<string, unknown>) => {
+  const handleFetchFormContent = useCallback(async (inputs: Record<string, string>) => {
     if (!fetchURL)
       return null
-    let requestParamsObj: Record<string, unknown> = {}
+    let requestParamsObj: Record<string, string> = {}
     Object.keys(inputs).forEach((key) => {
       if (inputs[key] === undefined) {
         delete inputs[key]

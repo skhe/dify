@@ -30,7 +30,7 @@ const renderModal = (payload: InputVar, onConfirm = vi.fn()) => {
         modelConfig: {
           model_id: 'test-model',
         },
-      } as DebugConfigurationState}
+      } as unknown as DebugConfigurationState}
     >
       <ConfigModal
         isShow
