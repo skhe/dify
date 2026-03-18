@@ -1,13 +1,6 @@
 import type { FC } from 'react'
 import type { HumanInputNodeType } from './types'
 import type { NodePanelProps, Var } from '@/app/components/workflow/types'
-import {
-  RiAddLine,
-  RiClipboardLine,
-  RiCollapseDiagonalLine,
-  RiExpandDiagonalLine,
-  RiEyeLine,
-} from '@remixicon/react'
 import { useBoolean } from 'ahooks'
 import copy from 'copy-to-clipboard'
 import * as React from 'react'
@@ -16,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import ActionButton from '@/app/components/base/action-button'
 import Button from '@/app/components/base/button'
 import Divider from '@/app/components/base/divider'
+import Modal from '@/app/components/base/modal'
 import Toast from '@/app/components/base/toast'
 import Tooltip from '@/app/components/base/tooltip'
 import OutputVars, { VarItem } from '@/app/components/workflow/nodes/_base/components/output-vars'
@@ -24,6 +18,7 @@ import useAvailableVarList from '@/app/components/workflow/nodes/_base/hooks/use
 import { useStore } from '@/app/components/workflow/store'
 import { VarType } from '@/app/components/workflow/types'
 import { cn } from '@/utils/classnames'
+import AddInputField from './components/add-input-field'
 import DeliveryMethod from './components/delivery-method'
 import FormContent from './components/form-content'
 import FormContentPreview from './components/form-content-preview'
@@ -49,6 +44,7 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
     handleTimeoutChange,
     handleFormContentChange,
     handleFormInputsChange,
+    handleFormInputItemAdd,
     handleFormInputItemRename,
     handleFormInputItemRemove,
     editorKey,
@@ -71,6 +67,10 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
   const [isPreview, {
     toggle: togglePreview,
     setFalse: hidePreview,
+  }] = useBoolean(false)
+  const [isShowAddInputModal, {
+    setTrue: showAddInputModal,
+    setFalse: hideAddInputModal,
   }] = useBoolean(false)
 
   const onAddUseAction = useCallback(() => {
@@ -107,13 +107,23 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
       >
         <div className="mb-1 flex shrink-0 items-center justify-between">
           <div className="flex h-6 items-center gap-0.5">
-            <div className="system-sm-semibold-uppercase text-text-secondary">{t(`${i18nPrefix}.formContent.title`, { ns: 'workflow' })}</div>
+            <div className="text-text-secondary system-sm-semibold-uppercase">{t(`${i18nPrefix}.formContent.title`, { ns: 'workflow' })}</div>
             <Tooltip
               popupContent={t(`${i18nPrefix}.formContent.tooltip`, { ns: 'workflow' })}
             />
           </div>
           {!readOnly && (
-            <div className="flex items-center ">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="small"
+                className="flex items-center space-x-1 px-2"
+                onClick={showAddInputModal}
+              >
+                <span className="i-ri-add-line size-3.5" />
+                <div className="system-xs-medium">{t(`${i18nPrefix}.formContent.addInputField`, { ns: 'workflow' })}</div>
+              </Button>
+              <div className="mx-2 h-3 w-px bg-divider-regular"></div>
               <Button
                 variant="ghost"
                 size="small"
@@ -123,7 +133,7 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
                 )}
                 onClick={togglePreview}
               >
-                <RiEyeLine className="size-3.5" />
+                <span className="i-ri-eye-line size-3.5" />
                 <div className="system-xs-medium">{t(`${i18nPrefix}.formContent.preview`, { ns: 'workflow' })}</div>
               </Button>
               <div className="mx-2 h-3 w-px bg-divider-regular"></div>
@@ -135,10 +145,10 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
                     Toast.notify({ type: 'success', message: t('actionMsg.copySuccessfully', { ns: 'common' }) })
                   }}
                 >
-                  <RiClipboardLine className="h-4 w-4 text-text-secondary" />
+                  <span className="i-ri-clipboard-line h-4 w-4 text-text-secondary" />
                 </div>
                 <div className={cn('flex size-6 cursor-pointer items-center justify-center rounded-md text-text-secondary hover:bg-components-button-ghost-bg-hover', isExpandFormContent && 'bg-state-accent-active text-text-accent')} onClick={toggleExpandFormContent}>
-                  {isExpandFormContent ? <RiCollapseDiagonalLine className="h-4 w-4" /> : <RiExpandDiagonalLine className="h-4 w-4" />}
+                  {isExpandFormContent ? <span className="i-ri-collapse-diagonal-line h-4 w-4" /> : <span className="i-ri-expand-diagonal-line h-4 w-4" />}
                 </div>
               </div>
             </div>
@@ -163,7 +173,7 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
       <div className="px-4 py-2">
         <div className="mb-1 flex items-center justify-between">
           <div className="flex items-center gap-0.5">
-            <div className="system-sm-semibold-uppercase text-text-secondary">{t(`${i18nPrefix}.userActions.title`, { ns: 'workflow' })}</div>
+            <div className="text-text-secondary system-sm-semibold-uppercase">{t(`${i18nPrefix}.userActions.title`, { ns: 'workflow' })}</div>
             <Tooltip
               popupContent={t(`${i18nPrefix}.userActions.tooltip`, { ns: 'workflow' })}
             />
@@ -173,19 +183,19 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
               <ActionButton
                 onClick={onAddUseAction}
               >
-                <RiAddLine className="h-4 w-4" />
+                <span className="i-ri-add-line h-4 w-4" />
               </ActionButton>
             </div>
           )}
         </div>
         {!inputs.user_actions.length && (
-          <div className="system-xs-regular flex items-center justify-center rounded-[10px] bg-background-section p-3 text-text-tertiary">{t(`${i18nPrefix}.userActions.emptyTip`, { ns: 'workflow' })}</div>
+          <div className="flex items-center justify-center rounded-[10px] bg-background-section p-3 text-text-tertiary system-xs-regular">{t(`${i18nPrefix}.userActions.emptyTip`, { ns: 'workflow' })}</div>
         )}
         {inputs.user_actions.length > 0 && (
           <div className="space-y-2">
             {inputs.user_actions.map((action, index) => (
               <UserActionItem
-                key={index}
+                key={action.id}
                 data={action}
                 onChange={data => handleUserActionChange(index, data)}
                 onDelete={handleUserActionDelete}
@@ -200,7 +210,7 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
       </div>
       {/* timeout */}
       <div className="flex items-center justify-between px-4 py-2">
-        <div className="system-sm-semibold-uppercase text-text-secondary">{t(`${i18nPrefix}.timeout.title`, { ns: 'workflow' })}</div>
+        <div className="text-text-secondary system-sm-semibold-uppercase">{t(`${i18nPrefix}.timeout.title`, { ns: 'workflow' })}</div>
         <TimeoutInput
           timeout={inputs.timeout}
           unit={inputs.timeout_unit}
@@ -243,6 +253,23 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
           userActions={inputs.user_actions}
           onClose={hidePreview}
         />
+      )}
+      {isShowAddInputModal && (
+        <Modal
+          isShow
+          onClose={hideAddInputModal}
+          className="max-w-[372px] !p-0"
+        >
+          <AddInputField
+            nodeId={id}
+            existingNames={inputs.inputs.map(input => input.output_variable_name)}
+            onSave={(payload) => {
+              handleFormInputItemAdd(payload)
+              hideAddInputModal()
+            }}
+            onCancel={hideAddInputModal}
+          />
+        </Modal>
       )}
     </div>
   )

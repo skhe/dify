@@ -8,12 +8,14 @@ type Props = {
   nodeId: string
   onSave: (newPayload: FormInputItem) => void
   onCancel: () => void
+  existingNames?: string[]
 }
 
 const AddInputField: FC<Props> = ({
   nodeId,
   onSave,
   onCancel,
+  existingNames,
 }) => {
   return (
     <InputField
@@ -21,6 +23,7 @@ const AddInputField: FC<Props> = ({
       isEdit={false}
       onChange={onSave}
       onCancel={onCancel}
+      existingNames={existingNames}
     />
   )
 }

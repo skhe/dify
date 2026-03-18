@@ -16,6 +16,7 @@ type InputFieldProps = {
   nodeId: string
   isEdit: boolean
   payload?: FormInputItem
+  existingNames?: string[]
   onChange: (newPayload: FormInputItem) => void
   onCancel: () => void
 }
@@ -28,6 +29,7 @@ const InputField: React.FC<InputFieldProps> = ({
   nodeId,
   isEdit,
   payload,
+  existingNames = [],
   onChange,
   onCancel,
 }) => {
@@ -41,11 +43,20 @@ const InputField: React.FC<InputFieldProps> = ({
       return false
     return /^[a-z_]\w{0,29}$/.test(name)
   }, [tempPayload.output_variable_name])
+  const nameDuplicated = useMemo(() => {
+    const name = tempPayload.output_variable_name.trim()
+    if (!name)
+      return false
+
+    const originalName = payload?.output_variable_name.trim()
+    return existingNames.some(existingName => existingName === name && existingName !== originalName)
+  }, [existingNames, payload?.output_variable_name, tempPayload.output_variable_name])
+  const canSave = nameValid && !nameDuplicated
   const handleSave = useCallback(() => {
-    if (!nameValid)
+    if (!canSave)
       return
     onChange(tempPayload)
-  }, [nameValid, onChange, tempPayload])
+  }, [canSave, onChange, tempPayload])
   const defaultValueConfig = tempPayload.default
   const handleDefaultValueChange = useCallback((key: keyof FormInputItemDefault) => {
     return (value: ValueSelector | string) => {
@@ -83,11 +94,11 @@ const InputField: React.FC<InputFieldProps> = ({
 
   return (
     <div className="w-[372px] rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg-blur p-3 shadow-lg backdrop-blur-[5px]">
-      <div className="system-md-semibold text-text-primary">{t(`${i18nPrefix}.title`, { ns: 'workflow' })}</div>
+      <div className="text-text-primary system-md-semibold">{t(`${i18nPrefix}.title`, { ns: 'workflow' })}</div>
       <div className="mt-3">
-        <div className="system-xs-medium text-text-secondary">
+        <div className="text-text-secondary system-xs-medium">
           {t(`${i18nPrefix}.saveResponseAs`, { ns: 'workflow' })}
-          <span className="system-xs-regular relative text-text-destructive-secondary">*</span>
+          <span className="relative text-text-destructive-secondary system-xs-regular">*</span>
         </div>
         <Input
           className="mt-1.5"
@@ -99,13 +110,18 @@ const InputField: React.FC<InputFieldProps> = ({
           autoFocus
         />
         {tempPayload.output_variable_name && !nameValid && (
-          <div className="system-xs-regular mt-1 px-1 text-text-destructive-secondary">
+          <div className="mt-1 px-1 text-text-destructive-secondary system-xs-regular">
             {t(`${i18nPrefix}.variableNameInvalid`, { ns: 'workflow' })}
+          </div>
+        )}
+        {tempPayload.output_variable_name && nameValid && nameDuplicated && (
+          <div className="mt-1 px-1 text-text-destructive-secondary system-xs-regular">
+            {t(`${i18nPrefix}.variableNameDuplicated`, { ns: 'workflow' })}
           </div>
         )}
       </div>
       <div className="mt-4">
-        <div className="system-xs-medium mb-1.5 text-text-secondary">
+        <div className="mb-1.5 text-text-secondary system-xs-medium">
           {t(`${i18nPrefix}.prePopulateField`, { ns: 'workflow' })}
         </div>
         <PrePopulate
@@ -127,7 +143,7 @@ const InputField: React.FC<InputFieldProps> = ({
               <Button
                 variant="primary"
                 onClick={handleSave}
-                disabled={!nameValid}
+                disabled={!canSave}
               >
                 {t('operation.save', { ns: 'common' })}
               </Button>
@@ -136,12 +152,12 @@ const InputField: React.FC<InputFieldProps> = ({
               <Button
                 className="flex"
                 variant="primary"
-                disabled={!nameValid}
+                disabled={!canSave}
                 onClick={handleSave}
               >
                 <span className="mr-1">{t(`${i18nPrefix}.insert`, { ns: 'workflow' })}</span>
-                <span className="system-kbd mr-0.5 flex h-4 items-center rounded-[4px] bg-components-kbd-bg-white px-1">{getKeyboardKeyNameBySystem('ctrl')}</span>
-                <span className=" system-kbd flex h-4 items-center rounded-[4px] bg-components-kbd-bg-white px-1">↩︎</span>
+                <span className="mr-0.5 flex h-4 items-center rounded-[4px] bg-components-kbd-bg-white px-1 system-kbd">{getKeyboardKeyNameBySystem('ctrl')}</span>
+                <span className="flex h-4 items-center rounded-[4px] bg-components-kbd-bg-white px-1 system-kbd">↩︎</span>
               </Button>
             )}
 

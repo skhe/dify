@@ -69,6 +69,7 @@ const HITLInputComponent: FC<HITLInputComponentProps> = ({
         nodeId={nodeId}
         varName={varName}
         formInput={payload}
+        existingNames={formInputs.map(item => item.output_variable_name)}
         onChange={handleChange}
         onRename={onRename}
         onRemove={onRemove}
