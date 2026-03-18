@@ -14,6 +14,7 @@ import Toast from '@/app/components/base/toast'
 import Split from '@/app/components/workflow/nodes/_base/components/split'
 import SingleRunForm from '@/app/components/workflow/nodes/human-input/components/single-run-form'
 import { BlockEnum, InputVarType } from '@/app/components/workflow/types'
+import { isGeoPointEmpty, parseGeoPointValue } from '@/app/components/workflow/utils/geo-point'
 import { TransferMethod } from '@/types/app'
 import { cn } from '@/utils/classnames'
 import Form from './form'
@@ -48,6 +49,11 @@ function formatValue(value: string | any, type: InputVarType) {
     return value
   if (type === InputVarType.number)
     return Number.parseFloat(value)
+  if (type === InputVarType.geoPoint) {
+    if (isGeoPointEmpty(value))
+      return undefined
+    return parseGeoPointValue(value)
+  }
   if (type === InputVarType.json)
     return JSON.parse(value)
   if (type === InputVarType.contexts) {
@@ -110,7 +116,7 @@ const BeforeRunForm: FC<BeforeRunFormProps> = ({
 
       form.inputs.forEach((input) => {
         const value = form.values[input.variable] as any
-        if (!errMsg && input.required && (input.type !== InputVarType.checkbox) && !(input.variable in existVarValuesInForm) && (value === '' || value === undefined || value === null || (input.type === InputVarType.files && value.length === 0)))
+        if (!errMsg && input.required && (input.type !== InputVarType.checkbox) && !(input.variable in existVarValuesInForm) && (value === '' || value === undefined || value === null || (input.type === InputVarType.files && value.length === 0) || (input.type === InputVarType.geoPoint && isGeoPointEmpty(value))))
           errMsg = t('errorMsg.fieldRequired', { ns: 'workflow', field: typeof input.label === 'object' ? input.label.variable : input.label })
 
         if (!errMsg && (input.type === InputVarType.singleFile || input.type === InputVarType.multiFiles) && value) {
@@ -122,6 +128,15 @@ const BeforeRunForm: FC<BeforeRunFormProps> = ({
 
           if (fileIsUploading)
             errMsg = t('errorMessage.waitForFileUpload', { ns: 'appDebug' })
+        }
+
+        if (!errMsg && input.type === InputVarType.geoPoint && !isGeoPointEmpty(value)) {
+          try {
+            parseGeoPointValue(value)
+          }
+          catch {
+            errMsg = t('errorMsg.invalidGeoPoint', { ns: 'workflow', field: typeof input.label === 'object' ? input.label.variable : input.label })
+          }
         }
       })
     })

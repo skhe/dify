@@ -103,6 +103,7 @@ const VarItem: FC<Props> = ({
           <ConfigVarModal
             isShow
             supportFile
+            supportGeoPoint
             payload={payload}
             onClose={hideEditVarModal}
             onConfirm={handlePayloadChange}

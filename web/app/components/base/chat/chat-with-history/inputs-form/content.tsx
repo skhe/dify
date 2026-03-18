@@ -7,8 +7,10 @@ import { PortalSelect } from '@/app/components/base/select'
 import Textarea from '@/app/components/base/textarea'
 import BoolInput from '@/app/components/workflow/nodes/_base/components/before-run-form/bool-input'
 import CodeEditor from '@/app/components/workflow/nodes/_base/components/editor/code-editor'
+import GeoPointInput from '@/app/components/workflow/nodes/_base/components/geo-point-input'
 import { CodeLanguage } from '@/app/components/workflow/nodes/code/types'
 import { InputVarType } from '@/app/components/workflow/types'
+import { getGeoPointDefaultValue } from '@/app/components/workflow/utils/geo-point'
 import { useChatWithHistoryContext } from '../context'
 
 type Props = {
@@ -48,9 +50,9 @@ const InputsFormContent = ({ showTip }: Props) => {
         <div key={form.variable} className="space-y-1">
           {form.type !== InputVarType.checkbox && (
             <div className="flex h-6 items-center gap-1">
-              <div className="system-md-semibold text-text-secondary">{form.label}</div>
+              <div className="text-text-secondary system-md-semibold">{form.label}</div>
               {!form.required && (
-                <div className="system-xs-regular text-text-tertiary">{t('panel.optional', { ns: 'workflow' })}</div>
+                <div className="text-text-tertiary system-xs-regular">{t('panel.optional', { ns: 'workflow' })}</div>
               )}
             </div>
           )}
@@ -131,10 +133,16 @@ const InputsFormContent = ({ showTip }: Props) => {
               }
             />
           )}
+          {form.type === InputVarType.geoPoint && (
+            <GeoPointInput
+              value={getGeoPointDefaultValue(inputsFormValue?.[form.variable])}
+              onChange={value => handleFormChange(form.variable, value)}
+            />
+          )}
         </div>
       ))}
       {showTip && (
-        <div className="system-xs-regular text-text-tertiary">{t('chat.chatFormTip', { ns: 'share' })}</div>
+        <div className="text-text-tertiary system-xs-regular">{t('chat.chatFormTip', { ns: 'share' })}</div>
       )}
     </div>
   )

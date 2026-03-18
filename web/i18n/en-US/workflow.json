@@ -306,6 +306,7 @@
   "errorMsg.fields.variable": "Variable Name",
   "errorMsg.fields.variableValue": "Variable Value",
   "errorMsg.fields.visionVariable": "Vision Variable",
+  "errorMsg.invalidGeoPoint": "{{field}} must include valid latitude and longitude",
   "errorMsg.invalidJson": "{{field}} is invalid JSON",
   "errorMsg.invalidVariable": "Invalid variable",
   "errorMsg.noValidTool": "{{field}} no valid tool selected",

@@ -19,8 +19,10 @@ import Toast from '@/app/components/base/toast'
 import { DEFAULT_FILE_UPLOAD_SETTING } from '@/app/components/workflow/constants'
 import CodeEditor from '@/app/components/workflow/nodes/_base/components/editor/code-editor'
 import FileUploadSetting from '@/app/components/workflow/nodes/_base/components/file-upload-setting'
+import GeoPointInput from '@/app/components/workflow/nodes/_base/components/geo-point-input'
 import { CodeLanguage } from '@/app/components/workflow/nodes/code/types'
 import { ChangeType, InputVarType, SupportUploadFileTypes } from '@/app/components/workflow/types'
+import { GEO_POINT_SCHEMA, getGeoPointDefaultValue, isGeoPointEmpty, parseGeoPointValue } from '@/app/components/workflow/utils/geo-point'
 import ConfigContext from '@/context/debug-configuration'
 import { AppModeEnum, TransferMethod } from '@/types/app'
 import { checkKeys, getNewVarInWorkflow, replaceSpaceWithUnderscoreInVarNameInput } from '@/utils/var'
@@ -60,6 +62,7 @@ export type IConfigModalProps = {
   onClose: () => void
   onConfirm: (newValue: InputVar, moreInfo?: MoreInfo) => void
   supportFile?: boolean
+  supportGeoPoint?: boolean
 }
 
 const ConfigModal: FC<IConfigModalProps> = ({
@@ -69,6 +72,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
   onClose,
   onConfirm,
   supportFile,
+  supportGeoPoint,
 }) => {
   const { modelConfig } = useContext(ConfigContext)
   const { t } = useTranslation()
@@ -87,7 +91,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
     catch {
       return ''
     }
-  }, [tempPayload.json_schema])
+  }, [tempPayload.json_schema, type])
   useEffect(() => {
     // To fix the first input element auto focus, then directly close modal will raise error
     if (isShow)
@@ -95,6 +99,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
   }, [isShow])
 
   const isStringInput = type === InputVarType.textInput || type === InputVarType.paragraph
+  const isGeoPoint = type === InputVarType.geoPoint
   const checkVariableName = useCallback((value: string, canBeEmpty?: boolean) => {
     const { isValid, errorMessageKey } = checkKeys([value], canBeEmpty)
     if (!isValid) {
@@ -174,6 +179,12 @@ const ConfigModal: FC<IConfigModalProps> = ({
           },
         ]
       : []),
+    ...(supportGeoPoint
+      ? [{
+          name: t('variableConfig.geo-point', { ns: 'appDebug' }),
+          value: InputVarType.geoPoint,
+        }]
+      : []),
     ...((!isBasicApp)
       ? [{
           name: t('variableConfig.json', { ns: 'appDebug' }),
@@ -189,6 +200,12 @@ const ConfigModal: FC<IConfigModalProps> = ({
       draft.type = type
       if (type === InputVarType.select)
         draft.default = undefined
+      if (![InputVarType.jsonObject, InputVarType.geoPoint].includes(type))
+        draft.json_schema = undefined
+      if (type === InputVarType.geoPoint) {
+        draft.default = undefined
+        draft.json_schema = GEO_POINT_SCHEMA
+      }
       if ([InputVarType.singleFile, InputVarType.multiFiles].includes(type)) {
         (Object.keys(DEFAULT_FILE_UPLOAD_SETTING)).forEach((key) => {
           if (key !== 'max_length')
@@ -248,9 +265,20 @@ const ConfigModal: FC<IConfigModalProps> = ({
 
     // if the input type is jsonObject and the schema is empty as determined by `isJsonSchemaEmpty`,
     // remove the `json_schema` field from the payload by setting its value to `undefined`.
-    const payloadToSave = tempPayload.type === InputVarType.jsonObject && isSchemaEmpty
-      ? { ...tempPayload, json_schema: undefined }
-      : tempPayload
+    const payloadToSave = (() => {
+      if (tempPayload.type === InputVarType.geoPoint) {
+        return {
+          ...tempPayload,
+          json_schema: GEO_POINT_SCHEMA,
+          default: isGeoPointEmpty(tempPayload.default) ? undefined : tempPayload.default,
+        }
+      }
+
+      if (tempPayload.type === InputVarType.jsonObject && isSchemaEmpty)
+        return { ...tempPayload, json_schema: undefined }
+
+      return tempPayload
+    })()
 
     const moreInfo = tempPayload.variable === payload?.variable
       ? undefined
@@ -267,7 +295,20 @@ const ConfigModal: FC<IConfigModalProps> = ({
       Toast.notify({ type: 'error', message: t('variableConfig.errorMsg.labelNameRequired', { ns: 'appDebug' }) })
       return
     }
-    if (isStringInput || type === InputVarType.number) {
+    if (type === InputVarType.geoPoint) {
+      const defaultValue = payloadToSave.default
+      if (!isGeoPointEmpty(defaultValue)) {
+        try {
+          parseGeoPointValue(defaultValue)
+        }
+        catch {
+          Toast.notify({ type: 'error', message: t('variableConfig.errorMsg.invalidGeoPointDefault', { ns: 'appDebug' }) })
+          return
+        }
+      }
+      onConfirm(payloadToSave, moreInfo)
+    }
+    else if (isStringInput || type === InputVarType.number) {
       onConfirm(payloadToSave, moreInfo)
     }
     else if (type === InputVarType.select) {
@@ -393,6 +434,15 @@ const ConfigModal: FC<IConfigModalProps> = ({
             </Field>
           )}
 
+          {isGeoPoint && (
+            <Field title={t('variableConfig.defaultValue', { ns: 'appDebug' })} isOptional>
+              <GeoPointInput
+                value={getGeoPointDefaultValue(tempPayload.default as Record<string, unknown> | undefined)}
+                onChange={value => handlePayloadChange('default')(value)}
+              />
+            </Field>
+          )}
+
           {type === InputVarType.checkbox && (
             <Field title={t('variableConfig.defaultValue', { ns: 'appDebug' })}>
               <SimpleSelect
@@ -482,12 +532,12 @@ const ConfigModal: FC<IConfigModalProps> = ({
 
           <div className="!mt-5 flex h-6 items-center space-x-2">
             <Checkbox checked={tempPayload.required} disabled={tempPayload.hide} onCheck={() => handlePayloadChange('required')(!tempPayload.required)} />
-            <span className="system-sm-semibold text-text-secondary">{t('variableConfig.required', { ns: 'appDebug' })}</span>
+            <span className="text-text-secondary system-sm-semibold">{t('variableConfig.required', { ns: 'appDebug' })}</span>
           </div>
 
           <div className="!mt-5 flex h-6 items-center space-x-2">
             <Checkbox checked={tempPayload.hide} disabled={tempPayload.required} onCheck={() => handlePayloadChange('hide')(!tempPayload.hide)} />
-            <span className="system-sm-semibold text-text-secondary">{t('variableConfig.hide', { ns: 'appDebug' })}</span>
+            <span className="text-text-secondary system-sm-semibold">{t('variableConfig.hide', { ns: 'appDebug' })}</span>
           </div>
         </div>
       </div>

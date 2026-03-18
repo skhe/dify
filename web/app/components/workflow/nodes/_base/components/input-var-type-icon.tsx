@@ -8,6 +8,7 @@ import {
   RiFileCopy2Line,
   RiFileList2Line,
   RiHashtag,
+  RiMapPin2Line,
   RiTextSnippet,
 } from '@remixicon/react'
 import * as React from 'react'
@@ -24,6 +25,7 @@ const getIcon = (type: InputVarType) => {
     [InputVarType.paragraph]: RiAlignLeft,
     [InputVarType.select]: RiCheckboxMultipleLine,
     [InputVarType.number]: RiHashtag,
+    [InputVarType.geoPoint]: RiMapPin2Line,
     [InputVarType.checkbox]: RiCheckboxLine,
     [InputVarType.jsonObject]: RiBracesLine,
     [InputVarType.singleFile]: RiFileList2Line,

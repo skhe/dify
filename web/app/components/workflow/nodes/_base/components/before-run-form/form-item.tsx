@@ -20,12 +20,14 @@ import Select from '@/app/components/base/select'
 import Textarea from '@/app/components/base/textarea'
 import { VarBlockIcon } from '@/app/components/workflow/block-icon'
 import { useHooksStore } from '@/app/components/workflow/hooks-store'
+import { getGeoPointDefaultValue } from '@/app/components/workflow/utils/geo-point'
 import { Resolution, TransferMethod } from '@/types/app'
 import { cn } from '@/utils/classnames'
 import { BlockEnum, InputVarType, SupportUploadFileTypes } from '../../../../types'
 import { CodeLanguage } from '../../../code/types'
 import CodeEditor from '../editor/code-editor'
 import TextEditor from '../editor/text-editor'
+import GeoPointInput from '../geo-point-input'
 import BoolInput from './bool-input'
 
 type Props = {
@@ -162,6 +164,16 @@ const FormItem: FC<Props> = ({
               value={value || ''}
               onChange={e => onChange(e.target.value)}
               placeholder={typeof payload.label === 'object' ? payload.label.variable : payload.label}
+              autoFocus={autoFocus}
+            />
+          )
+        }
+
+        {
+          type === InputVarType.geoPoint && (
+            <GeoPointInput
+              value={getGeoPointDefaultValue(value)}
+              onChange={onChange}
               autoFocus={autoFocus}
             />
           )

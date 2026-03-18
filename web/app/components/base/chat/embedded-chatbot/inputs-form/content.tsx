@@ -7,8 +7,10 @@ import { PortalSelect } from '@/app/components/base/select'
 import Textarea from '@/app/components/base/textarea'
 import BoolInput from '@/app/components/workflow/nodes/_base/components/before-run-form/bool-input'
 import CodeEditor from '@/app/components/workflow/nodes/_base/components/editor/code-editor'
+import GeoPointInput from '@/app/components/workflow/nodes/_base/components/geo-point-input'
 import { CodeLanguage } from '@/app/components/workflow/nodes/code/types'
 import { InputVarType } from '@/app/components/workflow/types'
+import { getGeoPointDefaultValue } from '@/app/components/workflow/utils/geo-point'
 import { useEmbeddedChatbotContext } from '../context'
 
 type Props = {
@@ -129,6 +131,12 @@ const InputsFormContent = ({ showTip }: Props) => {
               placeholder={
                 <div className="whitespace-pre">{form.json_schema}</div>
               }
+            />
+          )}
+          {form.type === InputVarType.geoPoint && (
+            <GeoPointInput
+              value={getGeoPointDefaultValue(inputsFormValue?.[form.variable])}
+              onChange={value => handleFormChange(form.variable, value)}
             />
           )}
         </div>

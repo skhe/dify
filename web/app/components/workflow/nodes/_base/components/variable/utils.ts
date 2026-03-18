@@ -119,6 +119,7 @@ export const inputVarTypeToVarType = (type: InputVarType): VarType => {
         [InputVarType.checkbox]: VarType.boolean,
         [InputVarType.singleFile]: VarType.file,
         [InputVarType.multiFiles]: VarType.arrayFile,
+        [InputVarType.geoPoint]: VarType.object,
         [InputVarType.jsonObject]: VarType.object,
       } as any
     )[type] || VarType.string

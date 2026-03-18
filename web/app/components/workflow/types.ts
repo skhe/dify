@@ -198,6 +198,7 @@ export enum InputVarType {
   paragraph = 'paragraph',
   select = 'select',
   number = 'number',
+  geoPoint = 'geo_point',
   url = 'url',
   files = 'files',
   json = 'json', // obj, array
@@ -220,7 +221,7 @@ export type InputVar = {
   }
   variable: string
   max_length?: number
-  default?: string | number
+  default?: string | number | boolean | Record<string, unknown> | Array<unknown>
   required: boolean
   hint?: string
   options?: string[]
@@ -230,7 +231,7 @@ export type InputVar = {
   getVarValueFromDependent?: boolean
   hide?: boolean
   isFileItem?: boolean
-  json_schema?: string | Record<string, any> // for jsonObject type
+  json_schema?: string | Record<string, any> // for jsonObject and geoPoint type
 } & Partial<UploadFileSetting>
 
 export type ModelConfig = {
