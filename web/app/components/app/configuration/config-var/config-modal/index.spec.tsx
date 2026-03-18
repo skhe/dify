@@ -1,5 +1,5 @@
 import type { InputVar } from '@/app/components/workflow/types'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Toast from '@/app/components/base/toast'
@@ -59,13 +59,17 @@ describe('ConfigModal geo point', () => {
       json_schema: GEO_POINT_SCHEMA,
     } as InputVar, handleConfirm)
 
-    fireEvent.change(screen.getByPlaceholderText('appDebug.variableConfig.latitude'), {
-      target: { value: '31.23' },
+    act(() => {
+      fireEvent.change(screen.getByPlaceholderText('appDebug.variableConfig.latitude'), {
+        target: { value: '31.23' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('appDebug.variableConfig.longitude'), {
+        target: { value: '121.47' },
+      })
     })
-    fireEvent.change(screen.getByPlaceholderText('appDebug.variableConfig.longitude'), {
-      target: { value: '121.47' },
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'common.operation.save' }))
     })
-    fireEvent.click(screen.getByRole('button', { name: 'common.operation.save' }))
 
     expect(handleConfirm).toHaveBeenCalledWith(expect.objectContaining({
       type: InputVarType.geoPoint,
@@ -89,13 +93,17 @@ describe('ConfigModal geo point', () => {
       json_schema: GEO_POINT_SCHEMA,
     } as InputVar, handleConfirm)
 
-    fireEvent.change(screen.getByPlaceholderText('appDebug.variableConfig.latitude'), {
-      target: { value: '100' },
+    act(() => {
+      fireEvent.change(screen.getByPlaceholderText('appDebug.variableConfig.latitude'), {
+        target: { value: '100' },
+      })
+      fireEvent.change(screen.getByPlaceholderText('appDebug.variableConfig.longitude'), {
+        target: { value: '121.47' },
+      })
     })
-    fireEvent.change(screen.getByPlaceholderText('appDebug.variableConfig.longitude'), {
-      target: { value: '121.47' },
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'common.operation.save' }))
     })
-    fireEvent.click(screen.getByRole('button', { name: 'common.operation.save' }))
 
     expect(handleConfirm).not.toHaveBeenCalled()
     expect(Toast.notify).toHaveBeenCalledWith(expect.objectContaining({
