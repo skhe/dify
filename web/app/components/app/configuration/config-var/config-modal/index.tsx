@@ -404,7 +404,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
           {type === InputVarType.textInput && (
             <Field title={t('variableConfig.defaultValue', { ns: 'appDebug' })}>
               <Input
-                value={tempPayload.default || ''}
+                value={typeof tempPayload.default === 'string' ? tempPayload.default : ''}
                 onChange={e => handlePayloadChange('default')(e.target.value || undefined)}
                 placeholder={t('variableConfig.inputPlaceholder', { ns: 'appDebug' })!}
               />
@@ -427,7 +427,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
             <Field title={t('variableConfig.defaultValue', { ns: 'appDebug' })}>
               <Input
                 type="number"
-                value={tempPayload.default || ''}
+                value={typeof tempPayload.default === 'string' || typeof tempPayload.default === 'number' ? tempPayload.default : ''}
                 onChange={e => handlePayloadChange('default')(e.target.value || undefined)}
                 placeholder={t('variableConfig.inputPlaceholder', { ns: 'appDebug' })!}
               />
@@ -478,7 +478,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
                         name: option,
                       })),
                     ]}
-                    defaultValue={tempPayload.default || ''}
+                    defaultValue={typeof tempPayload.default === 'string' ? tempPayload.default : ''}
                     onSelect={item => handlePayloadChange('default')(item.value === '' ? undefined : item.value)}
                     placeholder={t('variableConfig.selectDefaultValue', { ns: 'appDebug' })}
                     allowSearch={false}

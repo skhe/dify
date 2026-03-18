@@ -4,8 +4,8 @@ import type {
 } from '@/app/components/workflow/types'
 
 export type FormSliceShape = {
-  inputs: Record<string, string | number | boolean>
-  setInputs: (inputs: Record<string, string | number | boolean>) => void
+  inputs: Record<string, unknown>
+  setInputs: (inputs: Record<string, unknown>) => void
   files: RunFile[]
   setFiles: (files: RunFile[]) => void
 }

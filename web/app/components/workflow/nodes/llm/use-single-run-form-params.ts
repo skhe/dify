@@ -144,7 +144,7 @@ const useSingleRunFormParams = ({
             required: false,
           }],
           values: { '#context#': contexts },
-          onChange: keyValue => setContexts(keyValue['#context#']),
+          onChange: keyValue => setContexts((keyValue['#context#'] as string[]) || []),
         },
       )
     }

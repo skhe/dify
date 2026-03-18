@@ -110,7 +110,7 @@ const useSingleRunFormParams = ({
             required: false,
           }],
           values: { '#files#': visionFiles },
-          onChange: keyValue => setVisionFiles(keyValue['#files#']),
+          onChange: keyValue => setVisionFiles((keyValue['#files#'] as any[]) || []),
         },
       )
     }
