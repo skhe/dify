@@ -104,6 +104,33 @@ class TestFormInput:
         assert form_input.output_variable_name == "description"
         assert form_input.default is None
 
+    def test_select_input_with_static_options(self):
+        form_input = FormInput(
+            type=FormInputType.SELECT,
+            output_variable_name="choice",
+            options=["A", "B"],
+        )
+
+        assert form_input.type == FormInputType.SELECT
+        assert form_input.options == ["A", "B"]
+        assert form_input.options_selector == ()
+
+    def test_select_input_with_dynamic_options_selector(self):
+        form_input = FormInput(
+            type=FormInputType.SELECT,
+            output_variable_name="choice",
+            options_selector=["llm", "choices"],
+        )
+
+        assert form_input.option_variable_selector() == ["llm", "choices"]
+
+    def test_select_input_requires_options_or_selector(self):
+        with pytest.raises(ValidationError, match="select input requires options or options_selector"):
+            FormInput(
+                type=FormInputType.SELECT,
+                output_variable_name="choice",
+            )
+
 
 class TestUserAction:
     """Test UserAction entity."""

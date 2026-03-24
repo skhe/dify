@@ -58,6 +58,14 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
       return [VarType.string, VarType.number, VarType.secret].includes(varPayload.type)
     },
   })
+  const selectOptionsVars = availableVars.flatMap(nodeVar =>
+    nodeVar.vars
+      .filter(varItem => varItem.type === VarType.arrayString)
+      .map(varItem => ({
+        value: [nodeVar.nodeId, varItem.variable],
+        name: `${nodeVar.title} · ${varItem.variable}`,
+      })),
+  )
 
   const [isExpandFormContent, {
     toggle: toggleExpandFormContent,
@@ -160,6 +168,7 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
           value={inputs.form_content}
           onChange={handleFormContentChange}
           formInputs={inputs.inputs}
+          availableOptionsVars={selectOptionsVars}
           onFormInputsChange={handleFormInputsChange}
           onFormInputItemRename={handleFormInputItemRename}
           onFormInputItemRemove={handleFormInputItemRemove}
@@ -263,6 +272,7 @@ const Panel: FC<NodePanelProps<HumanInputNodeType>> = ({
           <AddInputField
             nodeId={id}
             existingNames={inputs.inputs.map(input => input.output_variable_name)}
+            availableOptionsVars={selectOptionsVars}
             onSave={(payload) => {
               handleFormInputItemAdd(payload)
               hideAddInputModal()

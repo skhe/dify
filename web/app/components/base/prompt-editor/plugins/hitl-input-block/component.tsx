@@ -21,6 +21,10 @@ type HITLInputComponentProps = {
   environmentVariables?: Var[]
   conversationVariables?: Var[]
   ragVariables?: Var[]
+  availableOptionsVars?: Array<{
+    value: ValueSelector
+    name: string
+  }>
   getVarType?: (payload: {
     nodeId: string
     valueSelector: ValueSelector
@@ -41,6 +45,7 @@ const HITLInputComponent: FC<HITLInputComponentProps> = ({
   environmentVariables,
   conversationVariables,
   ragVariables,
+  availableOptionsVars,
   readonly,
 }) => {
   const [ref] = useSelectOrDelete(nodeKey, DELETE_HITL_INPUT_BLOCK_COMMAND)
@@ -70,6 +75,7 @@ const HITLInputComponent: FC<HITLInputComponentProps> = ({
         varName={varName}
         formInput={payload}
         existingNames={formInputs.map(item => item.output_variable_name)}
+        availableOptionsVars={availableOptionsVars}
         onChange={handleChange}
         onRename={onRename}
         onRemove={onRemove}

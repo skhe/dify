@@ -18,14 +18,14 @@ const HumanInputForm = ({
   const [inputs, setInputs] = useState(defaultInputs)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleInputsChange = useCallback((name: string, value: string) => {
+  const handleInputsChange = useCallback((name: string, value: string | undefined) => {
     setInputs(prev => ({
       ...prev,
       [name]: value,
     }))
   }, [])
 
-  const submit = async (formToken: string, actionID: string, inputs: Record<string, string>) => {
+  const submit = async (formToken: string, actionID: string, inputs: Record<string, string | undefined>) => {
     setIsSubmitting(true)
     await onSubmit?.(formToken, { inputs, action: actionID })
     setIsSubmitting(false)
@@ -38,6 +38,7 @@ const HumanInputForm = ({
           key={index}
           content={content}
           formInputFields={formData.inputs}
+          resolvedOptions={formData.resolved_options}
           inputs={inputs}
           onInputChange={handleInputsChange}
         />

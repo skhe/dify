@@ -8,6 +8,7 @@ import type {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import AnswerIcon from '@/app/components/base/answer-icon'
 import AppIcon from '@/app/components/base/app-icon'
+import { sanitizeHumanInputSubmission } from '@/app/components/base/chat/chat/answer/human-input-content/submit-utils'
 import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
 import InputsForm from '@/app/components/base/chat/embedded-chatbot/inputs-form'
 import LogoAvatar from '@/app/components/base/logo/logo-embedded-chat-avatar'
@@ -224,10 +225,14 @@ const ChatWrapper = () => {
   }, [inputsForms.length, isMobile, currentConversationId, collapsed, allInputsHidden])
 
   const handleSubmitHumanInputForm = useCallback(async (formToken: string, formData: any) => {
+    const sanitizedFormData = {
+      ...formData,
+      inputs: sanitizeHumanInputSubmission(formData.inputs),
+    }
     if (isInstalledApp)
-      await submitHumanInputFormService(formToken, formData)
+      await submitHumanInputFormService(formToken, sanitizedFormData)
     else
-      await submitHumanInputForm(formToken, formData)
+      await submitHumanInputForm(formToken, sanitizedFormData)
   }, [isInstalledApp])
 
   const welcome = useMemo(() => {
@@ -253,7 +258,7 @@ const ChatWrapper = () => {
               background={appData?.site.icon_background}
               imageUrl={appData?.site.icon_url}
             />
-            <div className="body-lg-regular grow rounded-2xl bg-chat-bubble-bg px-4 py-3 text-text-primary">
+            <div className="grow rounded-2xl bg-chat-bubble-bg px-4 py-3 text-text-primary body-lg-regular">
               <Markdown content={welcomeMessage.content} />
               <SuggestedQuestions item={welcomeMessage} />
             </div>
@@ -271,7 +276,7 @@ const ChatWrapper = () => {
           imageUrl={appData?.site.icon_url}
         />
         <div className="max-w-[768px] px-4">
-          <Markdown className="!body-2xl-regular !text-text-tertiary" content={welcomeMessage.content} />
+          <Markdown className="!text-text-tertiary !body-2xl-regular" content={welcomeMessage.content} />
         </div>
       </div>
     )

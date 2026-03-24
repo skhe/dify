@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
+from types import SimpleNamespace
+
 from dify_graph.nodes.human_input.enums import HumanInputFormStatus
 from dify_graph.repositories.human_input_form_repository import (
     FormCreateParams,
@@ -43,6 +45,7 @@ class _InMemoryFormEntity(HumanInputFormEntity):
     is_submitted: bool = False
     status_value: HumanInputFormStatus = HumanInputFormStatus.WAITING
     expiration: datetime = naive_utc_now()
+    definition: Any = None
 
     @property
     def id(self) -> str:
@@ -99,6 +102,7 @@ class InMemoryHumanInputFormRepository(HumanInputFormRepository):
             form_id=form_id,
             rendered=params.rendered_content,
             token=token,
+            definition=SimpleNamespace(resolved_options=dict(params.resolved_options)),
         )
         self.created_forms.append(entity)
         self._forms_by_key[(params.workflow_execution_id, params.node_id)] = entity

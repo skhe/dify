@@ -85,6 +85,33 @@ describe('ContentItem', () => {
     expect(screen.queryByTestId('content-item-textarea')).not.toBeInTheDocument()
   })
 
+  it('should render Select for select fields', () => {
+    render(
+      <ContentItem
+        content="{{#$output.user_bio#}}"
+        formInputFields={[
+          {
+            type: 'select',
+            output_variable_name: 'user_bio',
+            default: {
+              type: 'constant',
+              value: '',
+              selector: [],
+            },
+            options: ['Option A', 'Option B'],
+          } as FormInputItem,
+        ]}
+        resolvedOptions={{ user_bio: ['Option A', 'Option B'] }}
+        inputs={{ user_bio: 'Option B' }}
+        onInputChange={mockOnInputChange}
+      />,
+    )
+
+    expect(screen.getByText('Option B')).toBeInTheDocument()
+    expect(screen.queryByTestId('content-item-input')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('content-item-textarea')).not.toBeInTheDocument()
+  })
+
   it('should call onInputChange when textarea value changes', async () => {
     const user = userEvent.setup()
     render(

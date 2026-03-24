@@ -1,5 +1,5 @@
 import type { FormInputItem } from '@/app/components/workflow/nodes/human-input/types'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { InputVarType } from '@/app/components/workflow/types'
 import InputField from '../input-field'
@@ -296,5 +296,75 @@ describe('InputField', () => {
       selector: [],
       value: '',
     })
+  })
+
+  it('should save static select options', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+
+    render(
+      <InputField
+        nodeId="node-select-static"
+        isEdit={false}
+        payload={createPayload({
+          type: InputVarType.select,
+          default: {
+            type: 'constant',
+            selector: [],
+            value: '',
+          },
+        })}
+        onChange={onChange}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.clear(screen.getAllByRole('textbox')[0])
+    await user.type(screen.getAllByRole('textbox')[0], 'selection')
+    fireEvent.change(screen.getAllByRole('textbox')[1], { target: { value: 'One\nTwo' } })
+    await user.click(screen.getByRole('button', { name: /workflow\.nodes\.humanInput\.insertInputField\.insert/i }))
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      type: InputVarType.select,
+      output_variable_name: 'selection',
+      options: ['One', 'Two'],
+      options_selector: undefined,
+    }))
+  })
+
+  it('should save dynamic select options from an upstream array variable', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+
+    render(
+      <InputField
+        nodeId="node-select-dynamic"
+        isEdit={false}
+        availableOptionsVars={[{ value: ['node-upstream', 'choices'], name: 'Upstream · choices' }]}
+        payload={createPayload({
+          type: InputVarType.select,
+          default: {
+            type: 'constant',
+            selector: [],
+            value: '',
+          },
+        })}
+        onChange={onChange}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.clear(screen.getAllByRole('textbox')[0])
+    await user.type(screen.getAllByRole('textbox')[0], 'selection')
+    await user.click(screen.getByRole('button', { name: /workflow\.nodes\.humanInput\.insertInputField\.useDynamicOptions/i }))
+    await user.click(screen.getByText('Upstream · choices'))
+    await user.click(screen.getByRole('button', { name: /workflow\.nodes\.humanInput\.insertInputField\.insert/i }))
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      type: InputVarType.select,
+      output_variable_name: 'selection',
+      options: undefined,
+      options_selector: ['node-upstream', 'choices'],
+    }))
   })
 })

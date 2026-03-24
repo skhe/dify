@@ -334,6 +334,7 @@ export type HumanInputFormData = {
   actions: UserAction[]
   form_token: string
   resolved_default_values: Record<string, string>
+  resolved_options?: Record<string, string[]>
   display_in_ui: boolean
   expiration_time: number
 }

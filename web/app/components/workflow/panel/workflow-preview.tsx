@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import Button from '@/app/components/base/button'
+import { sanitizeHumanInputSubmission } from '@/app/components/base/chat/chat/answer/human-input-content/submit-utils'
 import Loading from '@/app/components/base/loading'
 import { submitHumanInputForm } from '@/service/workflow'
 import { cn } from '@/utils/classnames'
@@ -98,7 +99,10 @@ const WorkflowPreview = () => {
   }, [resize, stopResizing])
 
   const handleSubmitHumanInputForm = useCallback(async (formToken: string, formData: any) => {
-    await submitHumanInputForm(formToken, formData)
+    await submitHumanInputForm(formToken, {
+      ...formData,
+      inputs: sanitizeHumanInputSubmission(formData.inputs),
+    })
   }, [])
 
   return (

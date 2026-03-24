@@ -56,6 +56,7 @@ class FormInputType(enum.StrEnum):
 
     TEXT_INPUT = enum.auto()
     PARAGRAPH = enum.auto()
+    SELECT = enum.auto()
 
 
 class PlaceholderType(enum.StrEnum):

@@ -9,6 +9,10 @@ type Props = {
   onSave: (newPayload: FormInputItem) => void
   onCancel: () => void
   existingNames?: string[]
+  availableOptionsVars?: Array<{
+    value: string[]
+    name: string
+  }>
 }
 
 const AddInputField: FC<Props> = ({
@@ -16,6 +20,7 @@ const AddInputField: FC<Props> = ({
   onSave,
   onCancel,
   existingNames,
+  availableOptionsVars,
 }) => {
   return (
     <InputField
@@ -24,6 +29,7 @@ const AddInputField: FC<Props> = ({
       onChange={onSave}
       onCancel={onCancel}
       existingNames={existingNames}
+      availableOptionsVars={availableOptionsVars}
     />
   )
 }

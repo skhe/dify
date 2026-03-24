@@ -69,4 +69,6 @@ export type FormInputItem = {
   type: InputVarType
   output_variable_name: string
   default: FormInputItemDefault
+  options?: string[]
+  options_selector?: ValueSelector
 }

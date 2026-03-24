@@ -638,8 +638,17 @@ export const useChat = (
     )
   }, [threadMessages, chatTree.length, updateCurrentQAOnTree, handleResponding, formSettings?.inputsForm, handleRun, notify, t, workflowStore, fetchInspectVars, invalidAllLastRun, config?.suggested_questions_after_answer?.enabled])
 
-  const handleSubmitHumanInputForm = async (formToken: string, formData: any) => {
-    await submitHumanInputForm(formToken, formData)
+  const handleSubmitHumanInputForm = async (
+    formToken: string,
+    formData: { inputs: Record<string, string | undefined>, action: string },
+  ) => {
+    const sanitizedInputs = Object.fromEntries(
+      Object.entries(formData.inputs).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+    )
+    await submitHumanInputForm(formToken, {
+      ...formData,
+      inputs: sanitizedInputs,
+    })
   }
 
   const getHumanInputNodeData = (nodeID: string) => {
