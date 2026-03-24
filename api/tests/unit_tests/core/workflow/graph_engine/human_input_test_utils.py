@@ -5,9 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any
-
 from types import SimpleNamespace
+from typing import Any
 
 from dify_graph.nodes.human_input.enums import HumanInputFormStatus
 from dify_graph.repositories.human_input_form_repository import (
