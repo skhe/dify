@@ -43,6 +43,7 @@ class FormCreateParams:
     #
     # For type = CONSTANT, the value is not stored inside `resolved_default_values`
     resolved_default_values: Mapping[str, Any]
+    resolved_options: Mapping[str, Sequence[str]]
     form_kind: HumanInputFormKind = HumanInputFormKind.RUNTIME
 
     # Force creating a console-only recipient for submission in Console.

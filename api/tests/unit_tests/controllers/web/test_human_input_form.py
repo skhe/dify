@@ -70,6 +70,7 @@ def test_get_form_includes_site(monkeypatch: pytest.MonkeyPatch, app: Flask):
                 "rendered_content": "Rendered {{#$output.name#}}",
                 "inputs": [{"type": "text", "output_variable_name": "name", "default": None}],
                 "default_values": {"name": "Alice", "age": 30, "meta": {"k": "v"}},
+                "resolved_options": {"choice": ["A", "B"]},
                 "user_actions": [{"id": "approve", "title": "Approve", "button_style": "default"}],
             }
 
@@ -139,12 +140,14 @@ def test_get_form_includes_site(monkeypatch: pytest.MonkeyPatch, app: Flask):
         "form_content",
         "inputs",
         "resolved_default_values",
+        "resolved_options",
         "user_actions",
         "expiration_time",
     }
     assert body["form_content"] == "Rendered {{#$output.name#}}"
     assert body["inputs"] == [{"type": "text", "output_variable_name": "name", "default": None}]
     assert body["resolved_default_values"] == {"name": "Alice", "age": "30", "meta": '{"k": "v"}'}
+    assert body["resolved_options"] == {"choice": ["A", "B"]}
     assert body["user_actions"] == [{"id": "approve", "title": "Approve", "button_style": "default"}]
     assert body["expiration_time"] == int(expiration_time.timestamp())
     assert body["site"] == {
@@ -193,6 +196,7 @@ def test_get_form_allows_backstage_token(monkeypatch: pytest.MonkeyPatch, app: F
                 "rendered_content": "Rendered",
                 "inputs": [],
                 "default_values": {},
+                "resolved_options": {},
                 "user_actions": [],
             }
 
@@ -258,12 +262,14 @@ def test_get_form_allows_backstage_token(monkeypatch: pytest.MonkeyPatch, app: F
         "form_content",
         "inputs",
         "resolved_default_values",
+        "resolved_options",
         "user_actions",
         "expiration_time",
     }
     assert body["form_content"] == "Rendered"
     assert body["inputs"] == []
     assert body["resolved_default_values"] == {}
+    assert body["resolved_options"] == {}
     assert body["user_actions"] == []
     assert body["expiration_time"] == int(expiration_time.timestamp())
     assert body["site"] == {

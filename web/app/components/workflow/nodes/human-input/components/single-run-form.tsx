@@ -32,7 +32,7 @@ const FormContent = ({
   const [inputs, setInputs] = useState(defaultInputs)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleInputsChange = (name: string, value: string) => {
+  const handleInputsChange = (name: string, value: string | undefined) => {
     setInputs(prev => ({
       ...prev,
       [name]: value,

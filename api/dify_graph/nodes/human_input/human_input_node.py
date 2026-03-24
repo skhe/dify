@@ -25,8 +25,13 @@ from dify_graph.workflow_type_encoder import WorkflowRuntimeTypeConverter
 from extensions.ext_database import db
 from libs.datetime_utils import naive_utc_now
 
-from .entities import DeliveryChannelConfig, HumanInputNodeData, apply_debug_email_recipient
-from .enums import DeliveryMethodType, HumanInputFormStatus, PlaceholderType
+from .entities import (
+    DeliveryChannelConfig,
+    HumanInputNodeData,
+    apply_debug_email_recipient,
+    validate_human_input_submission,
+)
+from .enums import DeliveryMethodType, FormInputType, HumanInputFormStatus, PlaceholderType
 
 if TYPE_CHECKING:
     from dify_graph.entities.graph_init_params import GraphInitParams
@@ -162,6 +167,28 @@ class HumanInputNode(Node[HumanInputNodeData]):
 
         return resolved_defaults
 
+    def resolve_select_options(self) -> Mapping[str, list[str]]:
+        variable_pool = self.graph_runtime_state.variable_pool
+        resolved_options: dict[str, list[str]] = {}
+        for input in self._node_data.inputs:
+            if input.type != FormInputType.SELECT:
+                continue
+            if input.options:
+                resolved_options[input.output_variable_name] = input.options
+                continue
+            if not input.options_selector:
+                continue
+            resolved_value = variable_pool.get(input.options_selector)
+            if resolved_value is None:
+                continue
+            raw_value = WorkflowRuntimeTypeConverter().value_to_json_encodable_recursive(resolved_value.value)
+            if not isinstance(raw_value, list):
+                continue
+            normalized_options = [str(item) for item in raw_value if item is not None]
+            resolved_options[input.output_variable_name] = normalized_options
+
+        return resolved_options
+
     def _should_require_console_recipient(self) -> bool:
         if self.invoke_from == InvokeFrom.DEBUGGER:
             return True
@@ -187,9 +214,22 @@ class HumanInputNode(Node[HumanInputNodeData]):
             for method in enabled_methods
         ]
 
+    @staticmethod
+    def _normalize_select_options(raw_value: Any) -> list[str]:
+        if not isinstance(raw_value, list):
+            return []
+
+        normalized_options: list[str] = []
+        for item in raw_value:
+            if item is None:
+                continue
+            normalized_options.append(str(item))
+        return normalized_options
+
     def _human_input_required_event(self, form_entity: HumanInputFormEntity) -> HumanInputRequired:
         node_data = self._node_data
         resolved_default_values = self.resolve_default_values()
+        resolved_options = self.resolve_select_options()
         display_in_ui = self._display_in_ui()
         form_token = form_entity.web_app_token
         if display_in_ui and form_token is None:
@@ -204,6 +244,7 @@ class HumanInputNode(Node[HumanInputNodeData]):
             node_title=node_data.title,
             form_token=form_token,
             resolved_default_values=resolved_default_values,
+            resolved_options=resolved_options,
         )
 
     def _run(self) -> Generator[NodeEventBase, None, None]:
@@ -231,6 +272,7 @@ class HumanInputNode(Node[HumanInputNodeData]):
                 delivery_methods=self._effective_delivery_methods(),
                 display_in_ui=display_in_ui,
                 resolved_default_values=self.resolve_default_values(),
+                resolved_options=self.resolve_select_options(),
                 console_recipient_required=self._should_require_console_recipient(),
                 console_creator_account_id=(
                     self.user_id if self.invoke_from in {InvokeFrom.DEBUGGER, InvokeFrom.EXPLORE} else None
@@ -274,6 +316,13 @@ class HumanInputNode(Node[HumanInputNodeData]):
         if selected_action_id is None:
             raise AssertionError(f"selected_action_id should not be None when form submitted, form_id={form.id}")
         submitted_data = form.submitted_data or {}
+        validate_human_input_submission(
+            inputs=self._node_data.inputs,
+            user_actions=self._node_data.user_actions,
+            selected_action_id=selected_action_id,
+            form_data=submitted_data,
+            resolved_options=form.definition.resolved_options,
+        )
         outputs: dict[str, Any] = dict(submitted_data)
         outputs[self._OUTPUT_FIELD_ACTION_ID] = selected_action_id
         rendered_content = self.render_form_content_with_outputs(

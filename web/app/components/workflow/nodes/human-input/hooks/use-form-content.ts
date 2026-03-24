@@ -4,6 +4,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useWorkflow } from '@/app/components/workflow/hooks'
 import useNodeCrud from '../../_base/hooks/use-node-crud'
 
+export const getFormInputReference = (variableName: string) => `{{#$output.${variableName}#}}`
+
+export const appendFormInputReference = (content: string, variableName: string) => {
+  const inputReference = getFormInputReference(variableName)
+  if (!content.trim())
+    return inputReference
+
+  return `${content.replace(/\s+$/, '')}\n\n${inputReference}`
+}
+
 const useFormContent = (id: string, payload: HumanInputNodeType) => {
   const [editorKey, setEditorKey] = useState(0)
   const { inputs, setInputs } = useNodeCrud<HumanInputNodeType>(id, payload)
@@ -27,10 +37,26 @@ const useFormContent = (id: string, payload: HumanInputNodeType) => {
     setEditorKey(editorKey => editorKey + 1)
   }, [inputs, setInputs])
 
+  const handleFormInputItemAdd = useCallback((formInput: FormInputItem) => {
+    const inputs = inputsRef.current
+    const newInputs = produce(inputs, (draft) => {
+      draft.inputs = [...draft.inputs, formInput]
+
+      const inputReference = getFormInputReference(formInput.output_variable_name)
+      if (!draft.form_content.includes(inputReference))
+        draft.form_content = appendFormInputReference(draft.form_content, formInput.output_variable_name)
+    })
+    setInputs(newInputs)
+    setEditorKey(editorKey => editorKey + 1)
+  }, [setInputs])
+
   const handleFormInputItemRename = useCallback((payload: FormInputItem, oldName: string) => {
     const inputs = inputsRef.current
     const newInputs = produce(inputs, (draft) => {
-      draft.form_content = draft.form_content.replaceAll(`{{#$output.${oldName}#}}`, `{{#$output.${payload.output_variable_name}#}}`)
+      draft.form_content = draft.form_content.replaceAll(
+        getFormInputReference(oldName),
+        getFormInputReference(payload.output_variable_name),
+      )
       draft.inputs = draft.inputs.map(item => item.output_variable_name === oldName ? payload : item)
       if (!draft.inputs.find(item => item.output_variable_name === payload.output_variable_name))
         draft.inputs = [...draft.inputs, payload]
@@ -46,7 +72,7 @@ const useFormContent = (id: string, payload: HumanInputNodeType) => {
   const handleFormInputItemRemove = useCallback((varName: string) => {
     const inputs = inputsRef.current
     const newInputs = produce(inputs, (draft) => {
-      draft.form_content = draft.form_content.replaceAll(`{{#$output.${varName}#}}`, '')
+      draft.form_content = draft.form_content.replaceAll(getFormInputReference(varName), '')
       draft.inputs = draft.inputs.filter(item => item.output_variable_name !== varName)
     })
     setInputs(newInputs)
@@ -57,6 +83,7 @@ const useFormContent = (id: string, payload: HumanInputNodeType) => {
     editorKey,
     handleFormContentChange,
     handleFormInputsChange,
+    handleFormInputItemAdd,
     handleFormInputItemRename,
     handleFormInputItemRemove,
   }

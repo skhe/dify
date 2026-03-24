@@ -46,8 +46,8 @@ const useSingleRunFormParams = ({
     const forms: FormProps[] = [{
       label: t(`${i18nPrefix}.singleRun.label`, { ns: 'workflow' })!,
       inputs: generatedInputs,
-      values: runInputData,
-      onChange: setRunInputData,
+      values: runInputData as Record<string, unknown>,
+      onChange: newValues => setRunInputData(newValues as Record<string, string>),
     }]
     return forms
   }, [t, generatedInputs, runInputData, setRunInputData])

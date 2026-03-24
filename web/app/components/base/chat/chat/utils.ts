@@ -66,6 +66,9 @@ export const getProcessedInputs = (inputs: Record<string, any>, inputsForm: Inpu
         processedInputs[item.variable] = inputValue
       }
     }
+    else if (item.type === InputVarType.geoPoint) {
+      processedInputs[item.variable] = inputValue
+    }
   })
 
   return processedInputs

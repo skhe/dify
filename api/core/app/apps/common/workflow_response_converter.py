@@ -332,6 +332,7 @@ class WorkflowResponseConverter:
                             display_in_ui=reason.display_in_ui,
                             form_token=reason.form_token,
                             resolved_default_values=reason.resolved_default_values,
+                            resolved_options=reason.resolved_options,
                             expiration_time=int(expiration_time.timestamp()),
                         ),
                     )

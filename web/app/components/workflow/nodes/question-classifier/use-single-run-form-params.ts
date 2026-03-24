@@ -16,10 +16,10 @@ const i18nPrefix = 'nodes.questionClassifiers'
 type Params = {
   id: string
   payload: QuestionClassifierNodeType
-  runInputData: Record<string, any>
-  runInputDataRef: RefObject<Record<string, any>>
+  runInputData: Record<string, unknown>
+  runInputDataRef: RefObject<Record<string, unknown>>
   getInputVars: (textList: string[]) => InputVar[]
-  setRunInputData: (data: Record<string, any>) => void
+  setRunInputData: (data: Record<string, unknown>) => void
   toVarInputs: (variables: Variable[]) => InputVar[]
 }
 const useSingleRunFormParams = ({
@@ -43,7 +43,7 @@ const useSingleRunFormParams = ({
   })
 
   const visionFiles = runInputData['#files#']
-  const setVisionFiles = useCallback((newFiles: any[]) => {
+  const setVisionFiles = useCallback((newFiles: unknown[]) => {
     setRunInputData?.({
       ...runInputDataRef.current,
       '#files#': newFiles,
@@ -53,7 +53,7 @@ const useSingleRunFormParams = ({
   const varInputs = getInputVars([inputs.instruction])
 
   const inputVarValues = (() => {
-    const vars: Record<string, any> = {}
+    const vars: Record<string, unknown> = {}
     Object.keys(runInputData)
       .filter(key => !['#files#'].includes(key))
       .forEach((key) => {
@@ -62,7 +62,7 @@ const useSingleRunFormParams = ({
     return vars
   })()
 
-  const setInputVarValues = useCallback((newPayload: Record<string, any>) => {
+  const setInputVarValues = useCallback((newPayload: Record<string, unknown>) => {
     const newVars = {
       ...newPayload,
       '#files#': runInputDataRef.current['#files#'],
@@ -104,13 +104,13 @@ const useSingleRunFormParams = ({
         {
           label: t('nodes.llm.vision', { ns: 'workflow' })!,
           inputs: [{
-            label: currentVariable?.variable as any,
+            label: currentVariable?.variable || '',
             variable: '#files#',
-            type: currentVariable?.formType as any,
+            type: currentVariable?.formType as InputVarType,
             required: false,
           }],
           values: { '#files#': visionFiles },
-          onChange: keyValue => setVisionFiles(keyValue['#files#']),
+          onChange: keyValue => setVisionFiles((Array.isArray(keyValue['#files#']) ? keyValue['#files#'] : [])),
         },
       )
     }

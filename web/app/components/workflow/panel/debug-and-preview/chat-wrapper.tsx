@@ -90,7 +90,7 @@ const ChatWrapper = (
   } = useChat(
     config,
     {
-      inputs,
+      inputs: inputs as Record<string, string | number | boolean | object>,
       inputsForm: (startVariables || []) as any,
     },
     [],

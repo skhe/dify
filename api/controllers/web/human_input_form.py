@@ -57,6 +57,7 @@ def _jsonify_form_definition(form: Form, site_payload: dict | None = None) -> Re
         "form_content": definition_payload["rendered_content"],
         "inputs": definition_payload["inputs"],
         "resolved_default_values": _stringify_default_values(definition_payload["default_values"]),
+        "resolved_options": definition_payload["resolved_options"],
         "user_actions": definition_payload["user_actions"],
         "expiration_time": _to_timestamp(form.expiration_time),
     }

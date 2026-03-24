@@ -19,6 +19,11 @@ type HITLInputComponentUIProps = {
   nodeId: string
   varName: string
   formInput?: FormInputItem
+  existingNames?: string[]
+  availableOptionsVars?: Array<{
+    value: ValueSelector
+    name: string
+  }>
   onChange: (input: FormInputItem) => void
   onRename: (payload: FormInputItem, oldName: string) => void
   onRemove: (varName: string) => void
@@ -45,6 +50,8 @@ const HITLInputComponentUI: FC<HITLInputComponentUIProps> = ({
       value: '',
     },
   },
+  existingNames = [],
+  availableOptionsVars = [],
   onChange,
   onRename,
   onRemove,
@@ -167,6 +174,8 @@ const HITLInputComponentUI: FC<HITLInputComponentUIProps> = ({
             nodeId={nodeId}
             isEdit
             payload={formInput}
+            existingNames={existingNames}
+            availableOptionsVars={availableOptionsVars}
             onChange={handleChange}
             onCancel={hideEditModal}
           />

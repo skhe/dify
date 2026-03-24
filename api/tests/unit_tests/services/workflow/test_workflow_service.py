@@ -284,3 +284,87 @@ class TestWorkflowService:
             )
 
         assert "Missing required inputs" in str(exc_info.value)
+
+    def test_human_input_preview_includes_resolved_select_options(
+        self, workflow_service: WorkflowService
+    ) -> None:
+        service = workflow_service
+        node_data = HumanInputNodeData(
+            title="Human Input",
+            form_content="<p>{{#$output.choice#}}</p>",
+            inputs=[
+                FormInput(
+                    type=FormInputType.SELECT,
+                    output_variable_name="choice",
+                    options_selector=["llm", "choices"],
+                )
+            ],
+            user_actions=[UserAction(id="approve", title="Approve")],
+        )
+        node = MagicMock()
+        node.node_data = node_data
+        node.title = "Human Input"
+        node.render_form_content_before_submission.return_value = "<p>preview</p>"
+        node.resolve_default_values.return_value = {}
+        node.resolve_select_options.return_value = {"choice": ["Alpha", "Beta"]}
+
+        service._build_human_input_variable_pool = MagicMock(return_value=MagicMock())  # type: ignore[method-assign]
+        service._build_human_input_node = MagicMock(return_value=node)  # type: ignore[method-assign]
+
+        workflow = MagicMock()
+        workflow.get_node_config_by_id.return_value = {"id": "node-1", "data": {"type": NodeType.HUMAN_INPUT.value}}
+        service.get_draft_workflow = MagicMock(return_value=workflow)  # type: ignore[method-assign]
+
+        app_model = SimpleNamespace(id="app-1", tenant_id="tenant-1")
+        account = SimpleNamespace(id="account-1")
+
+        result = service.get_human_input_form_preview(
+            app_model=app_model,
+            account=account,
+            node_id="node-1",
+            inputs={},
+        )
+
+        assert result["resolved_options"] == {"choice": ["Alpha", "Beta"]}
+
+    def test_submit_human_input_form_preview_rejects_invalid_select_option(
+        self, workflow_service: WorkflowService
+    ) -> None:
+        service = workflow_service
+        node_data = HumanInputNodeData(
+            title="Human Input",
+            form_content="<p>{{#$output.choice#}}</p>",
+            inputs=[
+                FormInput(
+                    type=FormInputType.SELECT,
+                    output_variable_name="choice",
+                    options_selector=["llm", "choices"],
+                )
+            ],
+            user_actions=[UserAction(id="approve", title="Approve")],
+        )
+        node = MagicMock()
+        node.node_data = node_data
+        node.resolve_select_options.return_value = {"choice": ["Alpha", "Beta"]}
+
+        service._build_human_input_variable_pool = MagicMock(return_value=MagicMock())  # type: ignore[method-assign]
+        service._build_human_input_node = MagicMock(return_value=node)  # type: ignore[method-assign]
+
+        workflow = MagicMock()
+        workflow.get_node_config_by_id.return_value = {"id": "node-1", "data": {"type": NodeType.HUMAN_INPUT.value}}
+        service.get_draft_workflow = MagicMock(return_value=workflow)  # type: ignore[method-assign]
+
+        app_model = SimpleNamespace(id="app-1", tenant_id="tenant-1")
+        account = SimpleNamespace(id="account-1")
+
+        with pytest.raises(ValueError) as exc_info:
+            service.submit_human_input_form_preview(
+                app_model=app_model,
+                account=account,
+                node_id="node-1",
+                form_inputs={"choice": "Gamma"},
+                inputs={},
+                action="approve",
+            )
+
+        assert "Invalid option for choice" in str(exc_info.value)

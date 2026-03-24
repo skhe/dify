@@ -32,6 +32,7 @@ class HumanInputRequired(BaseModel):
     #
     # Only form inputs with default value type `VARIABLE` will be resolved and stored in `resolved_default_values`.
     resolved_default_values: Mapping[str, Any] = Field(default_factory=dict)
+    resolved_options: Mapping[str, list[str]] = Field(default_factory=dict)
 
     # The `form_token` is the token used to submit the form via UI surfaces. It corresponds to
     # `HumanInputFormRecipient.access_token`.

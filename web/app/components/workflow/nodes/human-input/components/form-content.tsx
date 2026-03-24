@@ -20,6 +20,10 @@ type FormContentProps = {
   value: string
   onChange: (value: string) => void
   formInputs: FormInputItem[]
+  availableOptionsVars?: Array<{
+    value: string[]
+    name: string
+  }>
   onFormInputsChange: (payload: FormInputItem[]) => void
   onFormInputItemRename: (payload: FormInputItem, oldName: string) => void
   onFormInputItemRemove: (varName: string) => void
@@ -43,6 +47,7 @@ const FormContent: FC<FormContentProps> = ({
   value,
   onChange,
   formInputs,
+  availableOptionsVars = [],
   onFormInputsChange,
   onFormInputItemRename,
   onFormInputItemRemove,
@@ -148,6 +153,7 @@ const FormContent: FC<FormContentProps> = ({
                 Popup: ({ onClose, onInsert }) => (
                   <AddInputField
                     nodeId={nodeId}
+                    availableOptionsVars={availableOptionsVars}
                     onSave={handleInsertHITLNode(onInsert!)}
                     onCancel={onClose}
                   />

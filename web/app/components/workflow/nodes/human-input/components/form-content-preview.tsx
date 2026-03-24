@@ -77,7 +77,29 @@ const FormContentPreview: FC<FormContentPreviewProps> = ({
               }
               const defaultInput = input.default
               return (
-                <Note defaultInput={defaultInput!} nodeName={nodeName} />
+                <div className="space-y-2">
+                  <Note defaultInput={defaultInput!} nodeName={nodeName} />
+                  {input.type === 'select' && (
+                    <div className="rounded-lg border border-components-panel-border-subtle bg-components-panel-on-panel-item-bg px-3 py-2">
+                      <div className="mb-1 text-text-secondary system-xs-medium">
+                        {t('nodes.humanInput.insertInputField.fieldTypes.select', { ns: 'workflow' })}
+                      </div>
+                      {input.options?.length
+                        ? (
+                            <div className="text-text-tertiary system-xs-regular">
+                              {input.options.join(' / ')}
+                            </div>
+                          )
+                        : input.options_selector?.length
+                          ? (
+                              <div className="text-text-tertiary system-xs-regular">
+                                {t('nodes.humanInput.insertInputField.dynamicOptionsPreview', { ns: 'workflow' })}
+                              </div>
+                            )
+                          : null}
+                    </div>
+                  )}
+                </div>
               )
             })(),
           }}

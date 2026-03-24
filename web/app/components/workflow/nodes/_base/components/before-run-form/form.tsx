@@ -14,8 +14,8 @@ export type Props = {
   className?: string
   label?: string
   inputs: InputVar[]
-  values: Record<string, string>
-  onChange: (newValues: Record<string, any>) => void
+  values: Record<string, unknown>
+  onChange: (newValues: Record<string, unknown>) => void
 }
 
 const Form: FC<Props> = ({
@@ -53,7 +53,7 @@ const Form: FC<Props> = ({
   }, [values])
   const handleChange = useCallback((key: string) => {
     const mKeys = mapKeysWithSameValueSelector.get(key) ?? [key]
-    return (value: any) => {
+    return (value: unknown) => {
       const newValues = produce(valuesRef.current, (draft) => {
         for (const k of mKeys)
           draft[k] = value
@@ -66,11 +66,13 @@ const Form: FC<Props> = ({
 
   const isContext = inputs[0]?.type === InputVarType.contexts
   const handleAddContext = useCallback(() => {
-    const newValues = produce(values, (draft: any) => {
+    const newValues = produce(values, (draft) => {
       const key = inputs[0].variable
-      if (!draft[key])
-        draft[key] = []
-      draft[key].push(isContext ? RETRIEVAL_OUTPUT_STRUCT : '')
+      const existingValues = Array.isArray(draft[key]) ? draft[key] : []
+      draft[key] = [
+        ...existingValues,
+        isContext ? RETRIEVAL_OUTPUT_STRUCT : '',
+      ]
     })
     onChange(newValues)
   }, [values, onChange, inputs, isContext])
@@ -79,17 +81,17 @@ const Form: FC<Props> = ({
     <div className={cn(className, 'space-y-2')}>
       {label && (
         <div className="mb-1 flex items-center justify-between">
-          <div className="system-xs-medium-uppercase flex h-6 items-center text-text-tertiary">{label}</div>
+          <div className="flex h-6 items-center text-text-tertiary system-xs-medium-uppercase">{label}</div>
           {isArrayLikeType && !isIteratorItemFile && (
             <AddButton onClick={handleAddContext} />
           )}
         </div>
       )}
-      {inputs.map((input, index) => {
+      {inputs.map((input) => {
         return (
           <FormItem
             inStepRun
-            key={index}
+            key={input.variable}
             payload={input}
             value={values[input.variable]}
             onChange={handleChange(input.variable)}

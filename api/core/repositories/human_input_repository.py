@@ -355,6 +355,7 @@ class HumanInputFormRepositoryImpl:
                 rendered_content=params.rendered_content,
                 expiration_time=node_expiration,
                 default_values=dict(params.resolved_default_values),
+                resolved_options=dict(params.resolved_options),
                 display_in_ui=params.display_in_ui,
                 node_title=form_config.title,
             )

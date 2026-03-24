@@ -834,6 +834,7 @@ class WorkflowService:
 
         rendered_content = node.render_form_content_before_submission()
         resolved_default_values = node.resolve_default_values()
+        resolved_options = node.resolve_select_options()
         node_data = node.node_data
         human_input_required = HumanInputRequired(
             form_id=node_id,
@@ -843,6 +844,7 @@ class WorkflowService:
             node_id=node_id,
             node_title=node.title,
             resolved_default_values=resolved_default_values,
+            resolved_options=resolved_options,
             form_token=None,
         )
         return human_input_required.model_dump(mode="json")
@@ -892,12 +894,14 @@ class WorkflowService:
             variable_pool=variable_pool,
         )
         node_data = node.node_data
+        resolved_options = node.resolve_select_options()
 
         validate_human_input_submission(
             inputs=node_data.inputs,
             user_actions=node_data.user_actions,
             selected_action_id=action,
             form_data=form_inputs,
+            resolved_options=resolved_options,
         )
 
         rendered_content = node.render_form_content_before_submission()

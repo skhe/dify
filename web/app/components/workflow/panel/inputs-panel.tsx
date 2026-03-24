@@ -45,7 +45,7 @@ const InputsPanel = ({ onRun }: Props) => {
   const { checkInputsForm } = useCheckInputsForms()
 
   const initialInputs = useMemo(() => {
-    const result = { ...inputs }
+    const result: Record<string, unknown> = { ...inputs }
     if (startVariables) {
       startVariables.forEach((variable) => {
         if (variable.default)

@@ -184,6 +184,30 @@ class FormInput(BaseModel):
     type: FormInputType
     output_variable_name: str
     default: FormInputDefault | None = None
+    options: list[str] = Field(default_factory=list)
+    options_selector: Sequence[str] = Field(default_factory=tuple)
+
+    @model_validator(mode="after")
+    def _validate_options(self) -> Self:
+        if self.type != FormInputType.SELECT:
+            if self.options:
+                raise ValueError("options is only supported for select inputs")
+            if self.options_selector:
+                raise ValueError("options_selector is only supported for select inputs")
+            return self
+
+        if not self.options and not self.options_selector:
+            raise ValueError("select input requires options or options_selector")
+        if self.options and self.options_selector:
+            raise ValueError("select input options and options_selector are mutually exclusive")
+        return self
+
+    def option_variable_selector(self) -> Sequence[str] | None:
+        if self.type != FormInputType.SELECT:
+            return None
+        if not self.options_selector:
+            return None
+        return self.options_selector
 
 
 _IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -294,6 +318,12 @@ class HumanInputNodeData(BaseNodeData):
             qualified_variable_mapping_key = f"{node_id}.#{default_value_key}#"
             variable_mappings[qualified_variable_mapping_key] = default_value.selector
 
+            options_selector = input.option_variable_selector()
+            if options_selector:
+                options_key = ".".join(options_selector)
+                qualified_options_mapping_key = f"{node_id}.#{options_key}#"
+                variable_mappings[qualified_options_mapping_key] = options_selector
+
         return variable_mappings
 
     def find_action_text(self, action_id: str) -> str:
@@ -315,6 +345,7 @@ class FormDefinition(BaseModel):
 
     # this is used to store the resolved default values
     default_values: dict[str, Any] = Field(default_factory=dict)
+    resolved_options: dict[str, list[str]] = Field(default_factory=dict)
 
     # node_title records the title of the HumanInput node.
     node_title: str | None = None
@@ -333,6 +364,7 @@ def validate_human_input_submission(
     user_actions: Sequence[UserAction],
     selected_action_id: str,
     form_data: Mapping[str, Any],
+    resolved_options: Mapping[str, Sequence[str]] | None = None,
 ) -> None:
     available_actions = {action.id for action in user_actions}
     if selected_action_id not in available_actions:
@@ -348,3 +380,16 @@ def validate_human_input_submission(
     if missing_inputs:
         missing_list = ", ".join(missing_inputs)
         raise HumanInputSubmissionValidationError(f"Missing required inputs: {missing_list}")
+
+    resolved_options = resolved_options or {}
+    for form_input in inputs:
+        if form_input.type != FormInputType.SELECT:
+            continue
+        submitted_value = form_data.get(form_input.output_variable_name)
+        if submitted_value is None:
+            continue
+        options = resolved_options.get(form_input.output_variable_name) or form_input.options
+        if submitted_value not in options:
+            raise HumanInputSubmissionValidationError(
+                f"Invalid option for {form_input.output_variable_name}: {submitted_value}"
+            )

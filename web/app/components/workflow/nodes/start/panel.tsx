@@ -95,6 +95,7 @@ const Panel: FC<NodePanelProps<StartNodeType>> = ({
         <ConfigVarModal
           isCreate
           supportFile
+          supportGeoPoint
           isShow={isShowAddVarModal}
           onClose={hideAddVarModal}
           onConfirm={handleAddVarConfirm}
