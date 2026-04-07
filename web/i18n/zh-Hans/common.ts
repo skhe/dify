@@ -507,6 +507,7 @@ const translation = {
     apiKey: 'API 密钥',
     toBeConfigured: '待配置',
     configureTip: '请配置 API 密钥，添加模型。',
+    shared: '共享',
     installProvider: '安装模型供应商',
     installDataSourceProvider: '安装数据源供应商',
     discoverMore: '发现更多就在',

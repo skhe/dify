@@ -51,12 +51,16 @@ class ModelProviderFactory:
             contexts.plugin_model_providers_lock.set(Lock())
 
         with contexts.plugin_model_providers_lock.get():
-            plugin_model_providers = contexts.plugin_model_providers.get()
-            if plugin_model_providers is not None:
-                return plugin_model_providers
+            providers_cache = contexts.plugin_model_providers.get()
+            if providers_cache is not None and self.tenant_id in providers_cache:
+                return providers_cache[self.tenant_id]
 
-            plugin_model_providers = []
-            contexts.plugin_model_providers.set(plugin_model_providers)
+            if providers_cache is None:
+                providers_cache = {}
+                contexts.plugin_model_providers.set(providers_cache)
+
+            plugin_model_providers: list[PluginModelProviderEntity] = []
+            providers_cache[self.tenant_id] = plugin_model_providers
 
             # Fetch plugin model providers
             plugin_providers = self.plugin_model_manager.fetch_model_providers(self.tenant_id)

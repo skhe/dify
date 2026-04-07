@@ -514,6 +514,7 @@ const translation = {
     upgradeForLoadBalancing: 'Upgrade your plan to enable Load Balancing.',
     toBeConfigured: 'To be configured',
     configureTip: 'Set up api-key or add model to use',
+    shared: 'Shared',
     installProvider: 'Install model providers',
     installDataSourceProvider: 'Install data source providers',
     discoverMore: 'Discover more in ',

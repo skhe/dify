@@ -153,6 +153,52 @@ class ProviderManager:
         # Get All provider model credentials
         provider_name_to_provider_model_credentials_dict = self._get_all_provider_model_credentials(tenant_id)
 
+        # Merge shared tenant data if configured
+        shared_provider_names: set[str] = set()
+        shared_tenant_id = self._get_shared_tenant_id(tenant_id)
+        if shared_tenant_id:
+            shared_providers = self._get_all_providers(shared_tenant_id)
+            shared_models = self._get_all_provider_models(shared_tenant_id)
+            shared_model_credentials = self._get_all_provider_model_credentials(shared_tenant_id)
+            shared_model_settings = self._get_all_provider_model_settings(shared_tenant_id)
+            shared_load_balancing = self._get_all_provider_load_balancing_configs(shared_tenant_id)
+            shared_preferred = self._get_all_preferred_model_providers(shared_tenant_id)
+
+            # Fetch plugin entities from the shared tenant
+            shared_factory = ModelProviderFactory(shared_tenant_id)
+            shared_provider_entities = shared_factory.get_providers()
+
+            # Merge provider entities: add shared ones not already present locally
+            local_provider_names = {pe.provider for pe in provider_entities}
+            merged_provider_entities = list(provider_entities)
+            for spe in shared_provider_entities:
+                if spe.provider not in local_provider_names:
+                    merged_provider_entities.append(spe)
+            provider_entities = merged_provider_entities
+
+            # Merge each data dict: shared entries only for provider_names NOT already in local (local takes precedence)
+            for name, records in shared_providers.items():
+                if name not in provider_name_to_provider_records_dict:
+                    provider_name_to_provider_records_dict[name] = records
+                    shared_provider_names.add(name)
+            for name, records in shared_models.items():
+                if name not in provider_name_to_provider_model_records_dict:
+                    provider_name_to_provider_model_records_dict[name] = records
+                    shared_provider_names.add(name)
+            for name, records in shared_model_credentials.items():
+                if name not in provider_name_to_provider_model_credentials_dict:
+                    provider_name_to_provider_model_credentials_dict[name] = records
+                    shared_provider_names.add(name)
+            for name, records in shared_model_settings.items():
+                if name not in provider_name_to_provider_model_settings_dict:
+                    provider_name_to_provider_model_settings_dict[name] = records
+            for name, records in shared_load_balancing.items():
+                if name not in provider_name_to_provider_load_balancing_model_configs_dict:
+                    provider_name_to_provider_load_balancing_model_configs_dict[name] = records
+            for name, record in shared_preferred.items():
+                if name not in provider_name_to_preferred_model_provider_records_dict:
+                    provider_name_to_preferred_model_provider_records_dict[name] = record
+
         provider_configurations = ProviderConfigurations(tenant_id=tenant_id)
 
         # Construct ProviderConfiguration objects for each provider
@@ -244,14 +290,21 @@ class ProviderManager:
                 load_balancing_model_configs=provider_load_balancing_configs,
             )
 
+            # Determine if this provider comes from the shared tenant
+            is_shared = provider_name in shared_provider_names or str(provider_id_entity) in shared_provider_names
+
+            # For shared providers, use the shared tenant_id for credential operations
+            effective_tenant_id = shared_tenant_id if (is_shared and shared_tenant_id) else tenant_id
+
             provider_configuration = ProviderConfiguration(
-                tenant_id=tenant_id,
+                tenant_id=effective_tenant_id,
                 provider=provider_entity,
                 preferred_provider_type=preferred_provider_type,
                 using_provider_type=using_provider_type,
                 system_configuration=system_configuration,
                 custom_configuration=custom_configuration,
                 model_settings=model_settings,
+                is_shared=is_shared,
             )
 
             provider_configurations[str(provider_id_entity)] = provider_configuration
@@ -401,6 +454,16 @@ class ProviderManager:
             db.session.commit()
 
         return default_model
+
+    @staticmethod
+    def _get_shared_tenant_id(tenant_id: str) -> str | None:
+        """
+        Get the shared model providers tenant ID if configured and different from current tenant.
+        """
+        shared_id = dify_config.SHARED_MODEL_PROVIDERS_TENANT_ID
+        if shared_id and shared_id != tenant_id:
+            return shared_id
+        return None
 
     @staticmethod
     def _get_all_providers(tenant_id: str) -> dict[str, list[Provider]]:

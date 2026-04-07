@@ -250,6 +250,7 @@ export type ModelProvider = {
     quota_configurations: QuotaConfiguration[]
   }
   allow_custom_token?: boolean
+  is_shared?: boolean
 }
 
 export type Model = {

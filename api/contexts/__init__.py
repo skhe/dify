@@ -21,8 +21,8 @@ plugin_tool_providers: RecyclableContextVar[dict[str, "PluginToolProviderControl
 
 plugin_tool_providers_lock: RecyclableContextVar[Lock] = RecyclableContextVar(ContextVar("plugin_tool_providers_lock"))
 
-plugin_model_providers: RecyclableContextVar[list["PluginModelProviderEntity"] | None] = RecyclableContextVar(
-    ContextVar("plugin_model_providers")
+plugin_model_providers: RecyclableContextVar[dict[str, list["PluginModelProviderEntity"]] | None] = (
+    RecyclableContextVar(ContextVar("plugin_model_providers"))
 )
 
 plugin_model_providers_lock: RecyclableContextVar[Lock] = RecyclableContextVar(

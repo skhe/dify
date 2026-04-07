@@ -1285,6 +1285,19 @@ class SandboxExpiredRecordsCleanConfig(BaseSettings):
     )
 
 
+class SharedModelProvidersConfig(BaseSettings):
+    """
+    Configuration for sharing model providers across workspaces.
+    """
+
+    SHARED_MODEL_PROVIDERS_TENANT_ID: str | None = Field(
+        description="Tenant ID of the workspace whose model providers and credentials "
+        "are shared across all workspaces. When set, all workspaces will see "
+        "these providers alongside their own.",
+        default=None,
+    )
+
+
 class FeatureConfig(
     # place the configs in alphabet order
     AppExecutionConfig,
@@ -1312,6 +1325,7 @@ class FeatureConfig(
     RepositoryConfig,
     SandboxExpiredRecordsCleanConfig,
     SecurityConfig,
+    SharedModelProvidersConfig,
     TenantIsolatedTaskQueueConfig,
     ToolConfig,
     UpdateConfig,

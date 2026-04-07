@@ -122,6 +122,7 @@ class ModelProviderService:
                     current_quota_type=provider_configuration.system_configuration.current_quota_type,
                     quota_configurations=provider_configuration.system_configuration.quota_configurations,
                 ),
+                is_shared=provider_configuration.is_shared,
             )
 
             provider_responses.append(provider_response)
@@ -157,7 +158,15 @@ class ModelProviderService:
         :return:
         """
         provider_configuration = self._get_provider_configuration(tenant_id, provider)
-        return provider_configuration.get_provider_credential(credential_id=credential_id)
+        result = provider_configuration.get_provider_credential(credential_id=credential_id)
+
+        # Mask all credential values for shared providers
+        if provider_configuration.is_shared and result:
+            from constants import HIDDEN_VALUE
+
+            result = dict.fromkeys(result, HIDDEN_VALUE)
+
+        return result
 
     def validate_provider_credentials(self, tenant_id: str, provider: str, credentials: dict):
         """

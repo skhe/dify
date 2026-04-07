@@ -65,6 +65,7 @@ def service_with_fake_configurations():
         custom_configuration=fake_custom_configuration,
         system_configuration=fake_system_configuration,
         is_custom_configuration_available=lambda: True,
+        is_shared=False,
     )
 
     class _FakeProviderManager:

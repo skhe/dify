@@ -69,6 +69,7 @@ class ProviderConfiguration(BaseModel):
     system_configuration: SystemConfiguration
     custom_configuration: CustomConfiguration
     model_settings: list[ModelSettings]
+    is_shared: bool = False
 
     # pydantic configs
     model_config = ConfigDict(protected_namespaces=())
@@ -427,6 +428,13 @@ class ProviderConfiguration(BaseModel):
             provider_names.append(model_provider_id.provider_name)
         return provider_names
 
+    def _check_shared_readonly(self):
+        """Raise an error if this provider is shared and cannot be modified."""
+        if self.is_shared:
+            raise ValueError(
+                f"Provider {self.provider.provider} is shared from another workspace and cannot be modified."
+            )
+
     def create_provider_credential(self, credentials: dict, credential_name: str | None):
         """
         Add custom provider credentials.
@@ -434,6 +442,7 @@ class ProviderConfiguration(BaseModel):
         :param credential_name: credential name
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             if credential_name:
                 if self._check_provider_credential_name_exists(credential_name=credential_name, session=session):
@@ -495,6 +504,7 @@ class ProviderConfiguration(BaseModel):
         :param credential_name: credential name
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             if credential_name and self._check_provider_credential_name_exists(
                 credential_name=credential_name, session=session, exclude_id=credential_id
@@ -594,6 +604,7 @@ class ProviderConfiguration(BaseModel):
         :param credential_id: credential id
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             stmt = select(ProviderCredential).where(
                 ProviderCredential.id == credential_id,
@@ -671,6 +682,7 @@ class ProviderConfiguration(BaseModel):
         :param credential_id: credential id
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             stmt = select(ProviderCredential).where(
                 ProviderCredential.id == credential_id,
@@ -917,6 +929,7 @@ class ProviderConfiguration(BaseModel):
         :param credentials: model credentials dict
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             if credential_name:
                 if self._check_custom_model_credential_name_exists(
@@ -982,6 +995,7 @@ class ProviderConfiguration(BaseModel):
         :param credential_id: credential id
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             if credential_name and self._check_custom_model_credential_name_exists(
                 model=model,
@@ -1045,6 +1059,7 @@ class ProviderConfiguration(BaseModel):
         :param credential_id: credential id
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             stmt = select(ProviderModelCredential).where(
                 ProviderModelCredential.id == credential_id,
@@ -1118,6 +1133,7 @@ class ProviderConfiguration(BaseModel):
         :param credential_id: credential id
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             stmt = select(ProviderModelCredential).where(
                 ProviderModelCredential.id == credential_id,
@@ -1169,6 +1185,7 @@ class ProviderConfiguration(BaseModel):
         :param credential_id: credential id
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             stmt = select(ProviderModelCredential).where(
                 ProviderModelCredential.id == credential_id,
@@ -1205,6 +1222,7 @@ class ProviderConfiguration(BaseModel):
         :param model: model name
         :return:
         """
+        self._check_shared_readonly()
         with Session(db.engine) as session:
             # get provider model
             provider_model_record = self._get_custom_model_record(model_type=model_type, model=model, session=session)
@@ -1395,6 +1413,7 @@ class ProviderConfiguration(BaseModel):
         :param provider_type:
         :return:
         """
+        self._check_shared_readonly()
         if provider_type == self.preferred_provider_type:
             return
 

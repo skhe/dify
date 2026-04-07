@@ -80,6 +80,7 @@ class ProviderResponse(BaseModel):
     preferred_provider_type: ProviderType
     custom_configuration: CustomConfigurationResponse
     system_configuration: SystemConfigurationResponse
+    is_shared: bool = False
 
     # pydantic configs
     model_config = ConfigDict(protected_namespaces=())

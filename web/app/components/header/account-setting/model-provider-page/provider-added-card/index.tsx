@@ -50,7 +50,8 @@ const ProviderAddedCard: FC<ProviderAddedCardProps> = ({
   const hasModelList = fetched && !!modelList.length
   const { isCurrentWorkspaceManager } = useAppContext()
   const showQuota = systemConfig.enabled && [...MODEL_PROVIDER_QUOTA_GET_PAID].includes(provider.provider) && !IS_CE_EDITION
-  const showCredential = configurationMethods.includes(ConfigurationMethodEnum.predefinedModel) && isCurrentWorkspaceManager
+  const isShared = !!provider.is_shared
+  const showCredential = configurationMethods.includes(ConfigurationMethodEnum.predefinedModel) && isCurrentWorkspaceManager && !isShared
 
   const getModelList = async (providerName: string) => {
     if (loading)
@@ -95,6 +96,13 @@ const ProviderAddedCard: FC<ProviderAddedCardProps> = ({
             provider={provider}
           />
           <div className="flex gap-0.5">
+            {
+              isShared && (
+                <ModelBadge>
+                  {t('common.modelProvider.shared')}
+                </ModelBadge>
+              )
+            }
             {
               provider.supported_model_types.map(modelType => (
                 <ModelBadge key={modelType}>
@@ -157,7 +165,7 @@ const ProviderAddedCard: FC<ProviderAddedCardProps> = ({
               </div>
             )}
             {
-              configurationMethods.includes(ConfigurationMethodEnum.customizableModel) && isCurrentWorkspaceManager && (
+              configurationMethods.includes(ConfigurationMethodEnum.customizableModel) && isCurrentWorkspaceManager && !isShared && (
                 <div className="flex grow justify-end">
                   <ManageCustomModelCredentials
                     provider={provider}
