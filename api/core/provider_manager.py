@@ -62,6 +62,7 @@ class ProviderManager:
     def __init__(self):
         self.decoding_rsa_key = None
         self.decoding_cipher_rsa = None
+        self._decoding_tenant_id: str | None = None
 
     def get_configurations(self, tenant_id: str) -> ProviderConfigurations:
         """
@@ -229,13 +230,19 @@ class ProviderManager:
                     provider_name_to_provider_model_credentials_dict.get(provider_id_entity.provider_name, [])
                 )
 
+            # Determine if this provider comes from the shared tenant
+            is_shared = provider_name in shared_provider_names or str(provider_id_entity) in shared_provider_names
+
+            # For shared providers, use the shared tenant_id for credential decryption
+            config_tenant_id = shared_tenant_id if (is_shared and shared_tenant_id) else tenant_id
+
             # Convert to custom configuration
             custom_configuration = self._to_custom_configuration(
-                tenant_id, provider_entity, provider_records, provider_model_records, provider_model_credentials
+                config_tenant_id, provider_entity, provider_records, provider_model_records, provider_model_credentials
             )
 
             # Convert to system configuration
-            system_configuration = self._to_system_configuration(tenant_id, provider_entity, provider_records)
+            system_configuration = self._to_system_configuration(config_tenant_id, provider_entity, provider_records)
 
             # Get preferred provider type
             preferred_provider_type_record = provider_name_to_preferred_model_provider_records_dict.get(provider_name)
@@ -290,14 +297,8 @@ class ProviderManager:
                 load_balancing_model_configs=provider_load_balancing_configs,
             )
 
-            # Determine if this provider comes from the shared tenant
-            is_shared = provider_name in shared_provider_names or str(provider_id_entity) in shared_provider_names
-
-            # For shared providers, use the shared tenant_id for credential operations
-            effective_tenant_id = shared_tenant_id if (is_shared and shared_tenant_id) else tenant_id
-
             provider_configuration = ProviderConfiguration(
-                tenant_id=effective_tenant_id,
+                tenant_id=config_tenant_id,
                 provider=provider_entity,
                 preferred_provider_type=preferred_provider_type,
                 using_provider_type=using_provider_type,
@@ -931,9 +932,10 @@ class ProviderManager:
         except JSONDecodeError:
             return {}
 
-        # Decrypt secret variables
-        if self.decoding_rsa_key is None or self.decoding_cipher_rsa is None:
+        # Decrypt secret variables - invalidate cached key if tenant_id changed
+        if self.decoding_rsa_key is None or self.decoding_cipher_rsa is None or self._decoding_tenant_id != tenant_id:
             self.decoding_rsa_key, self.decoding_cipher_rsa = encrypter.get_decrypt_decoding(tenant_id)
+            self._decoding_tenant_id = tenant_id
 
         for variable in secret_variables:
             if variable in credentials:
