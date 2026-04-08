@@ -354,6 +354,32 @@ class ProviderManager:
         )
         default_model = db.session.scalar(stmt)
 
+        # If no local default, try to use the shared workspace's default
+        if not default_model:
+            shared_tenant_id = self._get_shared_tenant_id(tenant_id)
+            if shared_tenant_id:
+                stmt = select(TenantDefaultModel).where(
+                    TenantDefaultModel.tenant_id == shared_tenant_id,
+                    TenantDefaultModel.model_type == model_type.to_origin_model_type(),
+                )
+                shared_default = db.session.scalar(stmt)
+                if shared_default:
+                    # Verify the shared default model is actually available in this workspace
+                    provider_configurations = self.get_configurations(tenant_id)
+                    available_models = provider_configurations.get_models(model_type=model_type, only_active=True)
+                    if any(
+                        m.provider.provider == shared_default.provider_name and m.model == shared_default.model_name
+                        for m in available_models
+                    ):
+                        default_model = TenantDefaultModel(
+                            tenant_id=tenant_id,
+                            model_type=model_type.to_origin_model_type(),
+                            provider_name=shared_default.provider_name,
+                            model_name=shared_default.model_name,
+                        )
+                        db.session.add(default_model)
+                        db.session.commit()
+
         # If it does not exist, get the first available provider model from get_configurations
         # and update the TenantDefaultModel record
         if not default_model:
@@ -380,8 +406,16 @@ class ProviderManager:
         if not default_model:
             return None
 
-        model_provider_factory = ModelProviderFactory(tenant_id)
-        provider_schema = model_provider_factory.get_provider_schema(provider=default_model.provider_name)
+        # Try local factory first, fall back to shared factory for shared providers
+        try:
+            model_provider_factory = ModelProviderFactory(tenant_id)
+            provider_schema = model_provider_factory.get_provider_schema(provider=default_model.provider_name)
+        except ValueError:
+            shared_tenant_id = self._get_shared_tenant_id(tenant_id)
+            if not shared_tenant_id:
+                return None
+            model_provider_factory = ModelProviderFactory(shared_tenant_id)
+            provider_schema = model_provider_factory.get_provider_schema(provider=default_model.provider_name)
 
         return DefaultModelEntity(
             model=default_model.model_name,
