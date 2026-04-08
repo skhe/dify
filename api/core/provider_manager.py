@@ -177,27 +177,32 @@ class ProviderManager:
                     merged_provider_entities.append(spe)
             provider_entities = merged_provider_entities
 
-            # Merge each data dict: shared entries only for provider_names NOT already in local (local takes precedence)
+            # Merge shared data using the base Provider record as the authority.
+            # If a provider has a local Provider record (is_valid=True, meaning credentials configured),
+            # all its data stays local — no mixing of shared models/credentials with local provider records,
+            # since they use different encryption keys.
+            # Only providers with NO local base record are fully shared (read-only).
             for name, records in shared_providers.items():
                 if name not in provider_name_to_provider_records_dict:
                     provider_name_to_provider_records_dict[name] = records
                     shared_provider_names.add(name)
             for name, records in shared_models.items():
-                if name not in provider_name_to_provider_model_records_dict:
+                if name not in provider_name_to_provider_model_records_dict and name in shared_provider_names:
                     provider_name_to_provider_model_records_dict[name] = records
-                    shared_provider_names.add(name)
             for name, records in shared_model_credentials.items():
-                if name not in provider_name_to_provider_model_credentials_dict:
+                if name not in provider_name_to_provider_model_credentials_dict and name in shared_provider_names:
                     provider_name_to_provider_model_credentials_dict[name] = records
-                    shared_provider_names.add(name)
             for name, records in shared_model_settings.items():
-                if name not in provider_name_to_provider_model_settings_dict:
+                if name not in provider_name_to_provider_model_settings_dict and name in shared_provider_names:
                     provider_name_to_provider_model_settings_dict[name] = records
             for name, records in shared_load_balancing.items():
-                if name not in provider_name_to_provider_load_balancing_model_configs_dict:
+                if (
+                    name not in provider_name_to_provider_load_balancing_model_configs_dict
+                    and name in shared_provider_names
+                ):
                     provider_name_to_provider_load_balancing_model_configs_dict[name] = records
             for name, record in shared_preferred.items():
-                if name not in provider_name_to_preferred_model_provider_records_dict:
+                if name not in provider_name_to_preferred_model_provider_records_dict and name in shared_provider_names:
                     provider_name_to_preferred_model_provider_records_dict[name] = record
 
         provider_configurations = ProviderConfigurations(tenant_id=tenant_id)
